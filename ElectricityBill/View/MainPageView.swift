@@ -64,51 +64,77 @@ struct MainPageView: View {
                                 textStyle(text: "Live Usage", size: 25, weight: .semibold).padding(.leading, 20)
                                 Spacer()
                             }
-                            ZStack(alignment: .bottom) {
-                                let progress = usedkWh / 120.0
-                                LightningBolt()
-                                    .fill(.red.opacity(0.02))
+                            
+                            ZStack{
                                 
+                                VStack{
+                                    HStack{
+                                        textStyle(text:"1200 kWh", size: 12, color: .white.opacity(0.55))
+                                            .padding(.horizontal, 7)
+                                            .padding(.vertical, 2)
+                                            .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
+                                        Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
+                                    }
+                                    .offset(x: -70)
+                                    Spacer()
+                                    HStack{
+                                        Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
+                                        textStyle(text:"0 kWh", size: 12, color: .white.opacity(0.55))
+                                            .padding(.horizontal, 7)
+                                            .padding(.vertical, 2)
+                                            .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
+                                    }
+                                    .offset(x: 30)
+                                }
+                                .frame(height: 190)
                                 
-                                    .overlay(
-                                        LightningBolt()
-                                            .stroke(.white.opacity(0.3), lineWidth: 2)
-                                            .shadow(color: .white, radius: 5)
-                                        
-                                            .shadow(color: .white, radius: 15)
-                                            .shadow(color: .white, radius: 25)
-                                    )
-                                
-                                
-                                LightningBolt()
-                                    .fill(
-                                        LinearGradient(
-                                            stops: [
-                                                .init(color: .white, location: progress - 0.1),
-                                                .init(color: .clear, location: progress + 0.05),
-                                                .init(color: .clear, location: 1.0)
-                                                
-                                            ],
-                                            startPoint: .bottom,
-                                            endPoint: .top
+                                ZStack(alignment: .bottom) {
+                                    let progress = usedkWh / 120.0
+                                    LightningBolt()
+                                        .fill(.red.opacity(0.02))
+                                    
+                                    
+                                        .overlay(
+                                            LightningBolt()
+                                                .stroke(.white.opacity(0.3), lineWidth: 2)
+                                                .shadow(color: .white, radius: 5)
+                                            
+                                                .shadow(color: .white, radius: 15)
+                                                .shadow(color: .white, radius: 25)
                                         )
-                                    )
-                                
-                                    .mask(
-                                        GeometryReader { geometry in
-                                            VStack {
-                                                Spacer(minLength: 0)
-                                                Rectangle()
-                                                    .frame(height: geometry.size.height * progress)
+                                    
+                                    
+                                    LightningBolt()
+                                        .fill(
+                                            LinearGradient(
+                                                stops: [
+                                                    .init(color: .white, location: progress - 0.1),
+                                                    .init(color: .clear, location: progress + 0.05),
+                                                    .init(color: .clear, location: 1.0)
+                                                    
+                                                ],
+                                                startPoint: .bottom,
+                                                endPoint: .top
+                                            )
+                                        )
+                                    
+                                        .mask(
+                                            GeometryReader { geometry in
+                                                VStack {
+                                                    Spacer(minLength: 0)
+                                                    Rectangle()
+                                                        .frame(height: geometry.size.height * progress)
+                                                }
                                             }
-                                        }
-                                    )
-                                    .animation(.easeInOut(duration: 1.0), value: progress)
+                                        )
+                                        .animation(.easeInOut(duration: 1.0), value: progress)
+                                }
+                                .frame(width: 150, height: 220)
+                                .padding()
                             }
-                            .frame(width: 150, height: 220)
-                            .padding()
+                            
                             HStack(spacing:0){
-                                textStyle(text:"\(usedkWh)", size: 21, weight: .bold)
+                                textStyle(text:"\(Int(usedkWh.rounded()))", size: 21, weight: .bold)
                                 textStyle(text:"/1200 kWh", size: 21)
                             }
                             
