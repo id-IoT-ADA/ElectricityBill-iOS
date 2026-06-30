@@ -20,10 +20,12 @@ struct WelcomePage: View {
                     .font(.title2)
                     .bold()
                 Text("Savergy helps you monitor, control, and save on your home electricity, all from your phone.")
+                    .lineLimit(3)
+                    .multilineTextAlignment(.center)
 
             }
             .padding(EdgeInsets(top: 41, leading: 30, bottom: 38, trailing: 25))
-            .frame(width: 359, height: 201, alignment: .center)
+            .frame(width: 359, height: 220, alignment: .center)
             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 34))
             
         }

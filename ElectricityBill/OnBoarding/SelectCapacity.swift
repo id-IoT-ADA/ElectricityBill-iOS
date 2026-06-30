@@ -29,11 +29,10 @@ struct SelectElectricity: View {
                     withAnimation { isExpanded.toggle() }
                 }) {
                     HStack {
-                        Text("Electricity Capacity")
-                            .foregroundColor(selection == nil ? .gray : .primary)
+                        Text(selection ?? "Electricity Capacity")
+                            .foregroundColor(selection == nil ? .secondary : .primary)
                         Spacer()
-                        Text(selection ?? "Set")
-                            .foregroundColor(selection == nil ? .gray : .primary)
+                        
                         Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
                             .foregroundColor(.white)
                         
