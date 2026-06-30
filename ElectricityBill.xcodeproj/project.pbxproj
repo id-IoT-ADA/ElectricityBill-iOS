@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		26731F972FF34EB2000DE7DD /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 26731F962FF34EB2000DE7DD /* CocoaMQTT */; };
+		26731F992FF34EB2000DE7DD /* CocoaMQTTWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = 26731F982FF34EB2000DE7DD /* CocoaMQTTWebSocket */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		44E783762FECAF0A00FED550 /* ElectricityBill.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ElectricityBill.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26731F992FF34EB2000DE7DD /* CocoaMQTTWebSocket in Frameworks */,
+				26731F972FF34EB2000DE7DD /* CocoaMQTT in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,8 @@
 			);
 			name = ElectricityBill;
 			packageProductDependencies = (
+				26731F962FF34EB2000DE7DD /* CocoaMQTT */,
+				26731F982FF34EB2000DE7DD /* CocoaMQTTWebSocket */,
 			);
 			productName = ElectricityBill;
 			productReference = 44E783762FECAF0A00FED550 /* ElectricityBill.app */;
@@ -107,6 +116,9 @@
 			);
 			mainGroup = 44E7836D2FECAF0A00FED550;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				26731F952FF34EB2000DE7DD /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 44E783772FECAF0A00FED550 /* Products */;
 			projectDirPath = "";
@@ -273,6 +285,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -306,6 +319,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -345,6 +359,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		26731F952FF34EB2000DE7DD /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/emqx/CocoaMQTT.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.6;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		26731F962FF34EB2000DE7DD /* CocoaMQTT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26731F952FF34EB2000DE7DD /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTT;
+		};
+		26731F982FF34EB2000DE7DD /* CocoaMQTTWebSocket */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26731F952FF34EB2000DE7DD /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTTWebSocket;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 44E7836E2FECAF0A00FED550 /* Project object */;
 }
