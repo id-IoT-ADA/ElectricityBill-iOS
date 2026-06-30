@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var statusMessage = "Not Connected"
+    
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house.fill"){
