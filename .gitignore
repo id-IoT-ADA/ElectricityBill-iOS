@@ -1,2 +1,51 @@
-*.xcuserstate
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Xcode - per-user files
 xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+
+# Xcode - build & derived data
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode - misc
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods (kalau nanti dipakai)
+Pods/
+
+# Carthage (kalau nanti dipakai)
+Carthage/Build/
+
+# Fastlane (kalau nanti dipakai)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Injection / misc
+iOSInjectionProject/
+*.playground/playground.xcworkspace
