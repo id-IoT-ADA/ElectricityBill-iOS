@@ -5,7 +5,7 @@
 Icon
 ._*
 
-# Xcode - per-user files (BIANG KEROK conflict)
+# Xcode - per-user files
 xcuserdata/
 *.xcuserstate
 *.xcuserdatad
