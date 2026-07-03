@@ -267,7 +267,7 @@
 				CODE_SIGN_ENTITLEMENTS = ElectricityBill/ElectricityBill.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 42F3MCLFNS;
+				DEVELOPMENT_TEAM = UK593ANGNF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ElectricityBill/Info.plist;
@@ -303,7 +303,7 @@
 				CODE_SIGN_ENTITLEMENTS = ElectricityBill/ElectricityBill.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 42F3MCLFNS;
+				DEVELOPMENT_TEAM = UK593ANGNF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ElectricityBill/Info.plist;

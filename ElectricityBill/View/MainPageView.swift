@@ -86,6 +86,7 @@ struct MainPageView: View {
     @State var res : [String] = ["", ""]
     @State var popUpError: Bool = false
 
+    @State private var showAddDevice = false
     
     var body: some View {
         NavigationStack{
@@ -316,11 +317,20 @@ struct MainPageView: View {
                                 }
                                 
                             }
+                        Button{
+                            showAddDevice = true
+                        }label:{
+                            Label("Add Device", systemImage: "plus")
                         }
                     }label:{
                         Image(systemName: "ellipsis")
                     }.foregroundStyle(Color.white)
-                    
+
+                }
+            }
+            .sheet(isPresented: $showAddDevice){
+                NavigationStack{
+                    AddAccessoryView(homeStore: homeStore)
                 }
                 
                 
@@ -439,7 +449,7 @@ struct MainPageView: View {
         .onChange(of: homeStore.homes) { _ in
             updateSwiftData()
         }
-        
+
     }
     
     func updateSwiftData(){
