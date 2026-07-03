@@ -2,14 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>We use Bluetooth to discover and set up your smart devices</string>
-	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>We use Bluetooth to discover and set up your smart devices</string>
-	<key>NSHomeKitUsageDescription</key>
-	<string>This app uses HomeKit to control your smart devices like lamps.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>This app uses the local network to discover and set up your smart devices.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_hap._tcp</string>

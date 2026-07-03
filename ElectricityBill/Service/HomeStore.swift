@@ -176,9 +176,10 @@ extension HomeStore: HMAccessoryBrowserDelegate {
         }
         
         return errMsg
-
-    func accessoryBrowser(_ browser: HMAccessoryBrowser, didRemoveNewAccessory accessory: HMAccessory) {
-        foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
+        
+        func accessoryBrowser(_ browser: HMAccessoryBrowser, didRemoveNewAccessory accessory: HMAccessory) {
+            foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
+        }
     }
 }
 

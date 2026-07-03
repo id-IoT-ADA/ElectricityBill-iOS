@@ -44,6 +44,56 @@ struct LightningBolt: Shape {
     }
 }
 
+struct LightningBoltView: View {
+    @State var usedkWh: Double = 0.0
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            let progress = usedkWh / 120.0
+            LightningBolt()
+                .fill(.red.opacity(0.02))
+            
+            
+                .overlay(
+                    LightningBolt()
+                        .stroke(.white.opacity(0.3), lineWidth: 2)
+                        .shadow(color: .white, radius: 5)
+                    
+                        .shadow(color: .white, radius: 15)
+                        .shadow(color: .white, radius: 25)
+                )
+            
+            
+            LightningBolt()
+                .fill(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white, location: progress - 0.1),
+                            .init(color: .clear, location: progress + 0.05),
+                            .init(color: .clear, location: 1.0)
+                            
+                        ],
+                        startPoint: .bottom,
+                        endPoint: .top
+                    )
+                )
+            
+                .mask(
+                    GeometryReader { geometry in
+                        VStack {
+                            Spacer(minLength: 0)
+                            Rectangle()
+                                .frame(height: geometry.size.height * progress)
+                        }
+                    }
+                )
+                .animation(.easeInOut(duration: 1.0), value: progress)
+        }
+        .frame(width: 150, height: 220)
+        .padding()
+    }
+}
+
 struct MainPageView: View {
     //    @State var progress: CGFloat = 0.0
     @EnvironmentObject private var homeStore: HomeStore
@@ -57,16 +107,6 @@ struct MainPageView: View {
     ]
     @Environment(\.modelContext) private var context
     @State var homeObjList: [Home] = []
-    
-    private var lastActiveCategory = "Others"
-    
-    private let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
-    
-    private let logoNames = [
-        "Lamp" : "lightbulb.min",
-        "AC" : "air.conditioner.horizontal",
-        "Television" : "tv"
-    ]
     
     @State private var newHomeName: String = ""
     
@@ -85,8 +125,6 @@ struct MainPageView: View {
     @State var selection: String? = nil
     @State var res : [String] = ["", ""]
     @State var popUpError: Bool = false
-
-    @State private var showAddDevice = false
     
     var body: some View {
         NavigationStack{
@@ -127,53 +165,12 @@ struct MainPageView: View {
                                 }
                                 .frame(height: 190)
                                 
-                                ZStack(alignment: .bottom) {
-                                    let progress = usedkWh / 120.0
-                                    LightningBolt()
-                                        .fill(.red.opacity(0.02))
-                                    
-                                    
-                                        .overlay(
-                                            LightningBolt()
-                                                .stroke(.white.opacity(0.3), lineWidth: 2)
-                                                .shadow(color: .white, radius: 5)
-                                            
-                                                .shadow(color: .white, radius: 15)
-                                                .shadow(color: .white, radius: 25)
-                                        )
-                                    
-                                    
-                                    LightningBolt()
-                                        .fill(
-                                            LinearGradient(
-                                                stops: [
-                                                    .init(color: .white, location: progress - 0.1),
-                                                    .init(color: .clear, location: progress + 0.05),
-                                                    .init(color: .clear, location: 1.0)
-                                                    
-                                                ],
-                                                startPoint: .bottom,
-                                                endPoint: .top
-                                            )
-                                        )
-                                    
-                                        .mask(
-                                            GeometryReader { geometry in
-                                                VStack {
-                                                    Spacer(minLength: 0)
-                                                    Rectangle()
-                                                        .frame(height: geometry.size.height * progress)
-                                                }
-                                            }
-                                        )
-                                        .animation(.easeInOut(duration: 1.0), value: progress)
-                                }
-                                .frame(width: 150, height: 220)
-                                .padding()
+                                LightningBoltView()
                             }
                             
                             HStack(spacing:0){
-                                textStyle(text:"\(Int(usedkWh.rounded()))", size: 21, weight: .bold)
+                                let usedkWhRounded = Int(usedkWh.rounded())
+                                textStyle(text:"\(usedkWhRounded)", size: 21, weight: .bold)
                                 textStyle(text:"/1200 kWh", size: 21)
                             }
                             
@@ -223,45 +220,7 @@ struct MainPageView: View {
                                             
                                             Capsule().fill(Color.white).frame(height: 1)
                                             
-                                            ScrollView(.vertical, showsIndicators: true){
-                                                LazyVStack(spacing: 30){
-                                                    
-                                                    var groupedItems: [String: [HMAccessory]] {
-                                                        Dictionary(grouping: currentHMHome?.accessories ?? []) { accessory in
-                                                            switch
-                                                            accessory.category.categoryType {
-                                                            case HMAccessoryCategoryTypeLightbulb: return "Lamp"
-                                                            case HMAccessoryCategoryTypeAirConditioner: return "AC"
-                                                            case  HMAccessoryCategoryTypeTelevision: return "Television"
-                                                            default: return "Others"
-                                                            }
-                                                        }
-                                                    }
-                                                    let validCategories = sectionOrder.filter { groupedItems[$0] != nil }
-                                                    
-                                                    ForEach(Array(validCategories.enumerated()), id: \.element) { index, categoryType in
-                                                        
-                                                        
-                                                        if let accessories = groupedItems[categoryType]{
-                                                            
-                                                            HStack(spacing: 20){
-                                                                Image(systemName: logoNames[categoryType]!).font(Font.system(size: 35, weight: .thin))
-                                                                VStack(alignment:.leading){
-                                                                    textStyle(text: categoryType, size: 15, weight: .semibold)
-                                                                    textStyle(text: "Rp. ", size: 15)
-                                                                }
-                                                                Spacer()
-                                                            }
-                                                            
-                                                            if index < validCategories.count - 1{
-                                                                Capsule().fill(Color.white).frame(height: 0.7).padding(.trailing, 22)
-                                                            }
-                                                        }
-                                                    }
-                                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                                                    
-                                                }
-                                            }.frame(maxHeight: 200)
+                                            DetailsView(currentHMHome: currentHMHome!)
                                         }
                                     }
                                 }.padding(.horizontal, 22)
@@ -272,7 +231,8 @@ struct MainPageView: View {
                             
                             .listRowBackground(Color.clear)
                             
-                        }else{
+                        }
+                        else{
                             HStack{
                                 Spacer()
                                 textStyle(text: "Add accessory to your home")
@@ -292,6 +252,121 @@ struct MainPageView: View {
                 }
                 .listStyle(.plain)
                 
+                .sheet(isPresented: $showAddHomeSheet){
+                    
+                    ZStack{
+                        VStack(alignment: .leading, spacing: 30){
+                            HStack{
+                                Button{
+                                    showAddHomeSheet = false
+                                }label:{
+                                    Image(systemName: "xmark").foregroundStyle(Color.white)
+                                }
+                                Spacer()
+                                Text("New Home")
+                                Spacer()
+                                Button{
+                                    if let selectedCapacity = selection{
+                                        res = homeStore.createHome(homeName: newHomeName)
+                                        
+                                        if res[0] == "success"{
+                                            context.insert(Home(kwHlimit: EcapacityDict[selectedCapacity]!, homeName: newHomeName))
+                                            showAddHomeSheet = false
+                                        }
+                                        else{
+                                            popUpError.toggle()
+                                        }
+                                    }
+                                    
+                                    
+                                }label:{
+                                    Image(systemName: "checkmark").resizable()
+                                        .scaledToFit().padding()
+                                        .frame(width: 40, height: 40)
+                                }.glassEffect(.clear)
+                            }
+                            
+                            textStyle(text: "Home Name", size:16)
+                            TextField("Home Name", text: $newHomeName).padding().background(Color.white).foregroundStyle(Color.black)
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray, lineWidth: 1.0))
+                            
+                            VStack(spacing: 20){
+                                
+                                
+                                Text("Select Electricity Capacity")
+                                    .font(.title3)
+                                    .bold()
+                                
+                                Button(action: {
+                                    withAnimation { isExpanded.toggle() }
+                                }) {
+                                    HStack {
+                                        Text(selection ?? "Electricity Capacity")
+                                            .foregroundColor(selection == nil ? .secondary : .primary)
+                                        Spacer()
+                                        
+                                        Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
+                                            .foregroundColor(.white)
+                                        
+                                    }
+                                    .padding()
+                                    .glassEffect(.clear)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal,20)
+                                
+                                if isExpanded {
+                                    List(Ecapacity, id: \.self) { item in
+                                        Button(action: {
+                                            withAnimation {
+                                                selection = item
+                                                isExpanded = false
+                                            }
+                                        }) {
+                                            HStack {
+                                                Text(item)
+                                                    .foregroundColor(.primary)
+                                                Spacer()
+                                                if selection == item {
+                                                    Image(systemName: "checkmark")
+                                                        .foregroundColor(.blue)
+                                                }
+                                            }
+                                        }
+                                        .listRowBackground(Color.clear)
+                                        .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
+                                        .listRowSeparatorTint(Color.white.opacity(0.12))
+                                    }
+                                    .scrollContentBackground(.hidden)
+                                    .listStyle(.plain)
+                                    .frame(maxHeight: 290)
+                                    .background(.ultraThinMaterial)
+                                    .cornerRadius(28)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 28)
+                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    )
+                                    .padding(.horizontal, 20)
+                                }
+                            }
+                            Spacer()
+                        }.padding()
+                            .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
+                        
+                        if popUpError{
+                            Text(res[1])
+                            Button("Close"){
+                                popUpError.toggle()
+                            }.padding().background(Color.blue)
+                        }
+                    }
+                }
+                .onAppear{
+                    updateSwiftData()
+                }
+                .onChange(of: homeStore.homes) { _ in
+                    updateSwiftData()
+                }
             }
             .toolbar{
                 ToolbarItem(placement: .topBarTrailing){
@@ -313,148 +388,23 @@ struct MainPageView: View {
                                 textStyle(text: home.homeName, size: 16)
                                 if currentHome?.homeName == home.homeName{
                                     textStyle(text: "Current Location", size: 12)
-//                                    Image(systemName: "checkmark")
+                                    //                                    Image(systemName: "checkmark")
                                 }
                                 
                             }
-                        Button{
-                            showAddDevice = true
-                        }label:{
-                            Label("Add Device", systemImage: "plus")
                         }
                     }label:{
                         Image(systemName: "ellipsis")
                     }.foregroundStyle(Color.white)
-
                 }
             }
-            .sheet(isPresented: $showAddDevice){
-                NavigationStack{
-                    AddAccessoryView(homeStore: homeStore)
-                }
-                
-                
-            }
-        }.sheet(isPresented: $showAddHomeSheet){
-            
-            ZStack{
-                VStack(alignment: .leading, spacing: 30){
-                    HStack{
-                        Button{
-                            showAddHomeSheet = false
-                        }label:{
-                            Image(systemName: "xmark").foregroundStyle(Color.white)
-                        }
-                        Spacer()
-                        Text("New Home")
-                        Spacer()
-                        Button{
-                            if let selectedCapacity = selection{
-                                res = homeStore.createHome(homeName: newHomeName)
-                                
-                                if res[0] == "success"{
-                                    context.insert(Home(kwHlimit: EcapacityDict[selectedCapacity]!, homeName: newHomeName))
-                                    showAddHomeSheet = false
-                                }
-                                else{
-                                    popUpError.toggle()
-                                }
-                            }
-                            
-                            
-                        }label:{
-                            Image(systemName: "checkmark").resizable()
-                                .scaledToFit().padding()
-                                .frame(width: 40, height: 40)
-                        }.glassEffect(.clear)
-                    }
-                    
-                    textStyle(text: "Home Name", size:16)
-                    TextField("Home Name", text: $newHomeName).padding().background(Color.white).foregroundStyle(Color.black)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray, lineWidth: 1.0))
-                    
-                    VStack(spacing: 20){
-                        
-                        
-                        Text("Select Electricity Capacity")
-                            .font(.title3)
-                            .bold()
-                        
-                        Button(action: {
-                            withAnimation { isExpanded.toggle() }
-                        }) {
-                            HStack {
-                                Text(selection ?? "Electricity Capacity")
-                                    .foregroundColor(selection == nil ? .secondary : .primary)
-                                Spacer()
-                                
-                                Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
-                                    .foregroundColor(.white)
-                                
-                            }
-                            .padding()
-                            .glassEffect(.clear)
-                            .cornerRadius(10)
-                        }
-                        .padding(.horizontal,20)
-                        
-                        if isExpanded {
-                            List(Ecapacity, id: \.self) { item in
-                                Button(action: {
-                                    withAnimation {
-                                        selection = item
-                                        isExpanded = false
-                                    }
-                                }) {
-                                    HStack {
-                                        Text(item)
-                                            .foregroundColor(.primary)
-                                        Spacer()
-                                        if selection == item {
-                                            Image(systemName: "checkmark")
-                                                .foregroundColor(.blue)
-                                        }
-                                    }
-                                }
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
-                                .listRowSeparatorTint(Color.white.opacity(0.12))
-                            }
-                            .scrollContentBackground(.hidden)
-                            .listStyle(.plain)
-                            .frame(maxHeight: 290)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(28)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 28)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                    Spacer()
-                }.padding()
-                    .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-                
-                if popUpError{
-                    Text(res[1])
-                    Button("Close"){
-                        popUpError.toggle()
-                    }.padding().background(Color.blue)
-                }
-            }
-        }.onAppear{
-            updateSwiftData()
         }
-        .onChange(of: homeStore.homes) { _ in
-            updateSwiftData()
-        }
-
+        
     }
     
     func updateSwiftData(){
         let descriptor = FetchDescriptor<Home>()
-
+        
         do {
             var items = try context.fetch(descriptor)
             let homeNamesInData = items.map(\.homeName)
@@ -489,6 +439,64 @@ struct MainPageView: View {
         }
     }
 }
+
+
+struct DetailsView: View{
+    @State var currentHMHome: HMHome
+    
+    private let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
+    
+    private let logoNames = [
+        "Lamp" : "lightbulb.min",
+        "AC" : "air.conditioner.horizontal",
+        "Television" : "tv"
+    ]
+    var body: some View{
+        ScrollView(.vertical, showsIndicators: true){
+            VStack(spacing: 30){
+                
+                var groupedItems: [String: [HMAccessory]] {
+                    Dictionary(grouping: currentHMHome.accessories) { accessory in
+                        switch
+                        accessory.category.categoryType {
+                        case HMAccessoryCategoryTypeLightbulb: return "Lamp"
+                        case HMAccessoryCategoryTypeAirConditioner: return "AC"
+                        case  HMAccessoryCategoryTypeTelevision: return "Television"
+                        default: return "Others"
+                        }
+                    }
+                }
+                let validCategories = sectionOrder.filter { groupedItems[$0] != nil }
+                let arr = Array(validCategories.enumerated())
+                
+                ForEach(arr, id: \.element) { index, categoryType in
+                    
+                    
+                    if let accessories = groupedItems[categoryType]{
+                        
+                        HStack(spacing: 20){
+                            let logoName = logoNames[categoryType]!
+                            Image(systemName: logoName).font(Font.system(size: 35, weight: .thin))
+                            VStack(alignment:.leading){
+                                textStyle(text: categoryType, size: 15, weight: .semibold)
+                                textStyle(text: "Rp. ", size: 15)
+                            }
+                            Spacer()
+                        }
+                        
+                        let validCategoriesLen = validCategories.count - 1
+                        if index < validCategoriesLen{
+                            Capsule().fill(Color.white).frame(height: 0.7).padding(.trailing, 22)
+                        }
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+                
+            }
+        }.frame(maxHeight: 200)
+    }
+}
+
 #Preview {
     MainPageView()
 }
