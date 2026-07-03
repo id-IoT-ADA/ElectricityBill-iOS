@@ -9,13 +9,29 @@ import SwiftUI
 
 struct MonitoringView: View {
     @State var isActive: Bool = false
-    
+    @State private var showAddDevice = false
+
     var body: some View {
-        ZStack {
-            Image("OnBoarding Background")
-                .ignoresSafeArea()
-            
-            DeviceListRow(isActive: $isActive)
+        NavigationStack {
+            ZStack {
+                Image("OnBoarding Background")
+                    .ignoresSafeArea()
+
+                DeviceListRow(isActive: $isActive)
+            }
+            .navigationTitle("Devices")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showAddDevice = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showAddDevice) {
+                AddDeviceView()
+            }
         }
     }
 }
