@@ -48,6 +48,7 @@ struct MainPageView: View {
     @StateObject private var homeStore = HomeStore()
     @State var usedkWh: Double = 0.0
     @State var expandTotalSpend = false
+    @State private var showAddDevice = false
     
     var body: some View {
         NavigationStack{
@@ -250,16 +251,24 @@ struct MainPageView: View {
             .toolbar{
                 ToolbarItem(placement: .navigationBarTrailing){
                     Menu{
-                        Text("Menu 1")
-                        Text("Menu 2")
+                        Button{
+                            showAddDevice = true
+                        }label:{
+                            Label("Add Device", systemImage: "plus")
+                        }
                     }label:{
                         Image(systemName: "ellipsis")
                     }.foregroundStyle(Color.white)
-                    
+
+                }
+            }
+            .sheet(isPresented: $showAddDevice){
+                NavigationStack{
+                    AddAccessoryView(homeStore: homeStore)
                 }
             }
         }
-        
+
     }
 }
 #Preview {

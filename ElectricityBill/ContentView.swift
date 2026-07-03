@@ -16,7 +16,7 @@ struct ContentView: View {
                 MainPageView()
             }
             Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                EmptyView()
+                MonitoringView()
             }
             Tab("History", systemImage: "triangle") {
                 EmptyView()
