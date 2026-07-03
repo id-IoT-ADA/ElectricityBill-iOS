@@ -11,7 +11,7 @@ import SwiftUI
 struct ElectricityBillApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            OnBoardingPage()
         }
     }
 }
