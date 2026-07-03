@@ -7,6 +7,7 @@
 
 import HomeKit
 import Combine
+import SwiftUI
 import os
 
 private let hkLog = Logger(subsystem: "ElectricityBill", category: "HomeKit")
@@ -160,6 +161,21 @@ extension HomeStore: HMAccessoryBrowserDelegate {
             foundAccessories.append(accessory)
         }
     }
+    
+    func createHome(homeName: String) -> [String]{
+        var errMsg = ["", ""]
+        homeManager.addHome(withName: homeName){ [weak self] (newHome, error) in
+            
+            if let error = error {
+                errMsg = ["err", error.localizedDescription]
+                return
+            }
+            if let newHome = newHome {
+                errMsg = ["success", "Successfully added home: \(newHome.name)"]
+            }
+        }
+        
+        return errMsg
 
     func accessoryBrowser(_ browser: HMAccessoryBrowser, didRemoveNewAccessory accessory: HMAccessory) {
         foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }

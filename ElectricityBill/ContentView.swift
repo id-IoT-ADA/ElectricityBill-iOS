@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
+import HomeKit
 
 struct ContentView: View {
-    @State private var statusMessage = "Not Connected"
+//    @State private var statusMessage = "Not Connected"
+    @Environment(\.modelContext) private var context
+    @EnvironmentObject private var homeStore: HomeStore
     
     var body: some View {
         TabView {
@@ -22,6 +26,7 @@ struct ContentView: View {
                 EmptyView()
             }
         }.foregroundStyle(Color(.white))
+            
         
     }
 }

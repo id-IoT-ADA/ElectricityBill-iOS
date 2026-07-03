@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct ElectricityBillApp: App {
+    @StateObject private var homeStore = HomeStore()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
-        }
+            ContentView().environmentObject(homeStore)
+        }.modelContainer(for: Home.self)
     }
 }
