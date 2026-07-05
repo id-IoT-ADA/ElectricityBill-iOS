@@ -10,13 +10,17 @@ import HomeKit
 
 @Model
 class Home{
-    var id: UUID = UUID()
+    var id: UUID
     var kwHlimit: Int?
+    var VACapacity: Int?
     var homeName: String
     
-    init(kwHlimit: Int = 0, homeName: String) {
+    init(id : UUID, kwHlimit: Int = 0, VACapacity: Int = 0, homeName: String) {
+        self.id = id
+        self.VACapacity = nil
         self.kwHlimit = kwHlimit
         self.homeName = homeName
     }
     
 }
+

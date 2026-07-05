@@ -265,21 +265,24 @@ struct MainPageView: View {
                                 Spacer()
                                 Text("New Home")
                                 Spacer()
-                                Button{
-                                    if let selectedCapacity = selection{
-                                        res = homeStore.createHome(homeName: newHomeName)
-                                        
-                                        if res[0] == "success"{
-                                            context.insert(Home(kwHlimit: EcapacityDict[selectedCapacity]!, homeName: newHomeName))
-                                            showAddHomeSheet = false
-                                        }
-                                        else{
-                                            popUpError.toggle()
+                                Button {
+                                    if let selectedCapacity = selection {
+                                        homeStore.createHome(homeName: newHomeName) { result in
+                                            switch result {
+                                            case .success(let newHome):
+                                                context.insert(Home(
+                                                    id: newHome.uniqueIdentifier,   // <- match dengan HMHome, bukan UUID baru
+                                                    kwHlimit: EcapacityDict[selectedCapacity]!, homeName: newHome.name
+                                                ))
+                                                refreshHomeObjList()
+                                                showAddHomeSheet = false
+                                            case .failure(let error):
+                                                print("Gagal membuat home: \(error.localizedDescription)")
+                                                popUpError.toggle()
+                                            }
                                         }
                                     }
-                                    
-                                    
-                                }label:{
+                                } label: {
                                     Image(systemName: "checkmark").resizable()
                                         .scaledToFit().padding()
                                         .frame(width: 40, height: 40)
@@ -404,36 +407,47 @@ struct MainPageView: View {
     
     func updateSwiftData(){
         let descriptor = FetchDescriptor<Home>()
-        
         do {
             var items = try context.fetch(descriptor)
-            let homeNamesInData = items.map(\.homeName)
+            let idsInData = Set(items.map(\.id))
             currentHMHome = nil
+            
             for home in homeStore.homes {
-                if !homeNamesInData.contains(home.name){
+                if !idsInData.contains(home.uniqueIdentifier) {
                     print("add: \(home.name)")
-                    context.insert(Home(homeName: home.name))
+                    // Default kwHlimit untuk home yang muncul dari luar app (bukan lewat sheet ini,
+                    // misalnya dibuat via Home app) — user bisa edit limitnya nanti.
+                    context.insert(Home(id: home.uniqueIdentifier, kwHlimit: 1200, homeName: home.name))
                 }
-                if home.isPrimary{
+                if home.isPrimary {
                     currentHMHome = home
                 }
             }
             
+            // Hapus entry yang HMHome-nya sudah tidak ada — match by id, bukan nama
             items = try context.fetch(descriptor)
-            
-            for homeObj in items {
-                let homeExist = homeStore.homes.first(where: {$0.name == homeObj.homeName})
-                if homeExist == nil{
-                    print("delete: \(homeObj.homeName)")
-                    context.delete(homeObj)
-                }
+            let currentHomeKitIDs = Set(homeStore.homes.map(\.uniqueIdentifier))
+            for homeObj in items where !currentHomeKitIDs.contains(homeObj.id) {
+                print("delete: \(homeObj.homeName)")
+                context.delete(homeObj)
             }
             
-            items = try context.fetch(descriptor).sorted{$0.homeName < $1.homeName}
+            refreshHomeObjList()
+        } catch {
+            print(error)
+        }
+    }
+    
+    /// Refresh murah: cuma re-fetch + sort + publish ke homeObjList.
+    /// Aman dipanggil langsung setelah insert home baru, tanpa menunggu homeStore.homes sync.
+    func refreshHomeObjList() {
+        let descriptor = FetchDescriptor<Home>(sortBy: [SortDescriptor(\.homeName)])
+        do {
+            let items = try context.fetch(descriptor)
             homeObjList = items
-            if currentHMHome != nil {currentHome = items.first(where: {$0.homeName == currentHMHome!.name})}
-            print("current home: \(currentHome?.homeName ?? "no current home")")
-            
+            if let currentHMHome {
+                currentHome = items.first(where: { $0.id == currentHMHome.uniqueIdentifier })
+            }
         } catch {
             print(error)
         }
@@ -498,5 +512,11 @@ struct DetailsView: View{
 }
 
 #Preview {
-    MainPageView()
+    let container = try! ModelContainer(
+        for: Home.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    return MainPageView()
+        .environmentObject(HomeStore())
+        .modelContainer(container)
 }
