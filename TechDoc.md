@@ -3,7 +3,7 @@
 - Najwa Iqna Auliya
 - Julius Diky Ardianto
 - Ikhwan Inzaghi
-- 
+- ⁠⁠Clarisa Michelle Eugenia
 
 ## 2. Starting Assumption
 We thought we would end up using Network because considering we wanted to make our own device, we thought Network was the obvious framework to connect our DIY devices with our app.
@@ -28,14 +28,18 @@ Secondly, when we realized that we can't control smart devices remotely using Ho
 
 
 ## 6. The Revised Decision
-Final decision: HomeKit, EnergyKit, FoundationModel
+Final decision: HomeKit (Main Framework), EnergyKit, FoundationModel
 From thinking we would use Network, it changed into those 3 frameworks because through exploration we found that HomeKit supports DIY accessory. We also added EnergyKit because it supports the feature we want in our app which is to track and give insights on energy usage per device. Lastly, we added FoundationModel for accessibility, to create a voice command feature.
 
 
 ## About the Frameworks
-
+Our app can still run even without the EnergyKit Framework since the purpose of EnergyKit is to give insight regarding electricity usage. The data of the energy usage that is generated from INA219 can be calculated by adding function to calculate it. However, with the implementation of EnergyKit it would be much easier. On the other hand, FoundationModel inside the app is very much needed to help generate recommendation and such towards the duration of usage and energy consumption itself.
 
 ## About Accessibility and Localization
-
+- Accessibility: Larger Text
+at first, this application main target is for young people who lived abroad. but then, throughout the building process we found that this app may serves a larger audience with a higher range of age. By applying larger text, it would help people in the higher range of the age spectrum since they may have a limited vision.
+- Localization: Bahasa Indonesia
+Building this app with the "anak rantau" in mind, we choose to implement bahasa indonesia as part of the localization. Our first target would be indonesian since this app is currently build in Indonesia.
 
 ## About Privacy
+The data needed in the application is primarily from the Home App. Once you have downloaded the app it will ask permission to the Home data. Declining the permission request would make the app to stand on its own and no integration will be made to the home app that is available to your phone. 
