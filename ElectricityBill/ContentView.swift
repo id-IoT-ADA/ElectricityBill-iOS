@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
+import HomeKit
 
 struct ContentView: View {
-    @State private var statusMessage = "Not Connected"
+//    @State private var statusMessage = "Not Connected"
+    @Environment(\.modelContext) private var context
+    @EnvironmentObject private var homeStore: HomeStore
     
     var body: some View {
         TabView {
@@ -16,12 +20,13 @@ struct ContentView: View {
                 MainPageView()
             }
             Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                EmptyView()
+                MonitoringView()
             }
             Tab("History", systemImage: "triangle") {
                 EmptyView()
             }
         }.foregroundStyle(Color(.white))
+            
         
     }
 }

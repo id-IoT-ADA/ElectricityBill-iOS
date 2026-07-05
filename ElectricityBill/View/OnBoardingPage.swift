@@ -93,9 +93,10 @@ struct getHome: View {
         NavigationStack {
             Group {
                 // 1. Show a loading indicator first while HomeKit communicates with iCloud
-                if homelist.isLoading {
-                    ProgressView("Connecting to HomeApp...")
-                } else if homelist.homes.isEmpty {
+//                if homelist.isLoading {
+//                    ProgressView("Connecting to HomeApp...")
+//                }
+                if homelist.homes.isEmpty {
                     ContentUnavailableView(
                         "No Homes Found",
                         systemImage: "house",
