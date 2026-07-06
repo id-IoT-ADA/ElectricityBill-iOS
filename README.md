@@ -70,11 +70,12 @@ Savergy helps users better understand their electricity usage by providing real-
 
 - ESP32
 - HomeSpan
-- Arduino IDE
+- INA219
 
 ### Development Environment
 
 - Xcode
+- Arduino IDE
 
 ---
 
