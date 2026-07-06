@@ -25,15 +25,15 @@ Secondly, when we realized that we can't control smart devices remotely using Ho
 
 
 ## 5. Real Limitations Hit
-
+In the documentation, there is no explicit explanation that in order to have a long range control over the smart devices we need a HomeHub. We did not find alteratives solution to this. Therefore, we lend Apple HomePod to simulate the device control. 
 
 ## 6. The Revised Decision
-Final decision: HomeKit (Main Framework), EnergyKit, FoundationModel
-From thinking we would use Network, it changed into those 3 frameworks because through exploration we found that HomeKit supports DIY accessory. We also added EnergyKit because it supports the feature we want in our app which is to track and give insights on energy usage per device. Lastly, we added FoundationModel for accessibility, to create a voice command feature.
+Final decision: HomeKit (Main Framework), EnergyKit, FoundationModel, CoreBluetooth
+From thinking we would use Network, it changed into those 4 frameworks because through exploration we found that HomeKit supports DIY accessory. We also added EnergyKit because it supports the feature we want in our app which is to track and give insights on energy usage per device. We added FoundationModel to generate weekly insight on user's electricity consumption. Lastly, CoreBluetooth is needed in order to send local wifi credentials to ESP32.
 
 
 ## About the Frameworks
-Our app can still run even without the EnergyKit Framework since the purpose of EnergyKit is to give insight regarding electricity usage. The data of the energy usage that is generated from INA219 can be calculated by adding function to calculate it. However, with the implementation of EnergyKit it would be much easier. On the other hand, FoundationModel inside the app is very much needed to help generate recommendation and such towards the duration of usage and energy consumption itself.
+Our app can still run even without the EnergyKit Framework since the purpose of EnergyKit is to give insight regarding electricity usage. The data of the energy usage that is generated from INA219 can be calculated by adding function to calculate it. However, with the implementation of EnergyKit it would be much easier. On the other hand, FoundationModel inside the app is very much needed to help generate recommendation and such towards the duration of usage and energy consumption itself. Then, the use of CoreBluetooth is important in this app because it will help our ESP32 to connect to the local wifi.
 
 ## About Accessibility and Localization
 - Accessibility: Larger Text
