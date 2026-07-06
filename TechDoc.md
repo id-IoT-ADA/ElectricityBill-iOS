@@ -29,6 +29,7 @@ In the documentation, there is no explicit explanation that in order to have a l
 
 ## 6. The Revised Decision
 Final decision: HomeKit (Main Framework), EnergyKit, FoundationModel, CoreBluetooth
+
 From thinking we would use Network, it changed into those 4 frameworks because through exploration we found that HomeKit supports DIY accessory. We also added EnergyKit because it supports the feature we want in our app which is to track and give insights on energy usage per device. We added FoundationModel to generate weekly insight on user's electricity consumption. Lastly, CoreBluetooth is needed in order to send local wifi credentials to ESP32.
 
 
