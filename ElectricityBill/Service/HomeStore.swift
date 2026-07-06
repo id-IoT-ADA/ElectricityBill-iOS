@@ -148,7 +148,7 @@ extension HomeStore: HMHomeManagerDelegate {
         DispatchQueue.main.async {
             self.homes = manager.homes
             self.homeLocal = manager.homes.map {
-                Home(id: $0.uniqueIdentifier, homeName: $0.name)
+                Home(id: $0.uniqueIdentifier, homeName: $0.name, priceperKwh: 0)
             }
             self.primaryHome = manager.primaryHome ?? manager.homes.first
             self.refreshPaired()

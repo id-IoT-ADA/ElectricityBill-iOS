@@ -81,7 +81,7 @@ struct OnBoardingPage: View {
     }
     private func finishOnboarding() {
         guard let selectedHome, let limit = resolvedLimit else { return }
-        context.insert(Home(id: selectedHome.uniqueIdentifier, VACapacity: limit, homeName: selectedHome.name))
+        context.insert(Home(id: selectedHome.uniqueIdentifier, VACapacity: limit, homeName: selectedHome.name, priceperKwh: 1444.0))
         hasCompletedOnboarding = true
         print("Home: \(selectedHome.name) with VA Limit: \(limit)")
     }

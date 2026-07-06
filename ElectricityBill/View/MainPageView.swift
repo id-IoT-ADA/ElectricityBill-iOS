@@ -113,18 +113,143 @@ struct MainPageView: View {
     @State var currentHome: Home?
     @State var currentHMHome: HMHome?
     
-    let Ecapacity = ["450 VA","900 VA (Subsidi)","900 VA(Non-subsidi)","1300 - 2200 VA", ">3500 VA"  ]
-    let EcapacityDict = [
-        "450 VA" : 450,
-        "900 VA (Subsidi)" : 900,
-        "900 VA(Non-subsidi)" : 900,
-        "1300 - 2200 VA" : 2200,
-        ">3500 VA" : 3500
+    static let Ecapacity: [String] = ["450 VA","900 VA (Subsidi)","900 VA(Non-subsidi)","1300 VA", "2200 VA", "Others"]
+    
+    
+    static let EcapacityDict = [
+        "450 VA": 450,
+        "900 VA (Subsidi)": 900,
+        "900 VA(Non-subsidi)": 900,
+        "1300 VA": 1300,
+        "2200 VA": 2200
+    ]
+    
+    static let priceperKwH = [
+        "450 VA": 415.0,
+        "900 VA (Subsidi)": 605.0,
+        "900 VA(Non-subsidi)": 1352.0,
+        "1300 VA": 1444.70,
+        "2200 VA": 1444.70,
+        "Others" : 1699.53
     ]
     @State var isExpanded = false
     @State var selection: String? = nil
     @State var res : [String] = ["", ""]
     @State var popUpError: Bool = false
+    
+    private var liveUsageSection: some View {
+        VStack(alignment: .center, spacing: 10) {
+            Spacer()
+            HStack {
+                textStyle(text: "Live Usage", size: 25, weight: .semibold)
+                    .padding(.leading, 20)
+                Spacer()
+            }
+
+            ZStack {
+                usageAxisLabels
+                LightningBoltView()
+            }
+
+            HStack(spacing: 0) {
+                let usedkWhRounded = Int(usedkWh.rounded())
+                textStyle(text: "\(usedkWhRounded)", size: 21, weight: .bold)
+                textStyle(text: "/1200 kWh", size: 21)
+            }
+
+            VStack(spacing: -210) {
+                Image("Squiggle1")
+                Image("Squiggle2")
+            }
+            .frame(height: 100)
+        }
+        .listRowBackground(Color.clear)
+    }
+    
+    private var usageAxisLabels: some View {
+        VStack {
+            HStack {
+                textStyle(text: "\(currentHome?.VACapacity ?? 1200)", size: 12, color: .white.opacity(0.55))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
+                Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
+            }
+            .offset(x: -70)
+            Spacer()
+            HStack {
+                Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
+                textStyle(text: "0 kWh", size: 12, color: .white.opacity(0.55))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
+            }
+            .offset(x: 30)
+        }
+        .frame(height: 190)
+    }
+    
+    private var totalSpendSection: some View {
+        Group {
+            if currentHMHome?.accessories.isEmpty == false {
+                VStack(alignment: .leading) {
+                    textStyle(text: "Total Spend", size: 25, weight: .semibold)
+                    totalSpendCard
+                }
+                .listRowBackground(Color.clear)
+            } else {
+                HStack {
+                    Spacer()
+                    textStyle(text: "Add accessory to your home")
+                    Spacer()
+                }
+                .padding()
+                .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
+                .listRowBackground(Color.clear)
+            }
+        }
+    }
+
+    private var totalSpendCard: some View {
+        Button {
+            withAnimation(.spring(response: 1.0, dampingFraction: 0.8)) {
+                expandTotalSpend.toggle()
+            }
+        } label: {
+            VStack(spacing: 30) {
+                totalSpendHeader
+                if expandTotalSpend {
+                    Capsule().fill(Color.white).frame(height: 1)
+                    DetailsView(currentHMHome: currentHMHome!)
+                }
+            }
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 22)
+        .padding(.bottom, expandTotalSpend ? 22 : 12)
+        .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
+    }
+
+    private var totalSpendHeader: some View {
+        VStack(spacing: -7) {
+            HStack(spacing: 20) {
+                Image("MoneyBag").resizable().frame(width: 52, height: 59)
+                VStack(alignment: .leading) {
+                    textStyle(text: "This Month You Spend", size: 18, weight: .semibold)
+                    textStyle(text: "Rp. ", size: 18)
+                }
+                Spacer()
+            }
+            HStack {
+                Spacer()
+                textStyle(text: expandTotalSpend ? "close" : "details")
+                Image(systemName: expandTotalSpend ? "chevron.up" : "chevron.down")
+                    .font(Font.system(size: 12))
+                    .foregroundStyle(Color.white)
+            }
+        }
+    }
+    
     
     var body: some View {
         NavigationStack{
@@ -135,113 +260,12 @@ struct MainPageView: View {
                 
                 List{
                     Section{
-                        VStack(alignment: .center, spacing: 10){
-                            Spacer()
-                            HStack{
-                                textStyle(text: "Live Usage", size: 25, weight: .semibold).padding(.leading, 20)
-                                Spacer()
-                            }
-                            
-                            ZStack{
-                                
-                                VStack{
-                                    HStack{
-                                        textStyle(text:"\(currentHome?.VACapacity ?? 1200)", size: 12, color: .white.opacity(0.55))
-                                            .padding(.horizontal, 7)
-                                            .padding(.vertical, 2)
-                                            .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
-                                        Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
-                                    }
-                                    .offset(x: -70)
-                                    Spacer()
-                                    HStack{
-                                        Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
-                                        textStyle(text:"0 kWh", size: 12, color: .white.opacity(0.55))
-                                            .padding(.horizontal, 7)
-                                            .padding(.vertical, 2)
-                                            .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
-                                    }
-                                    .offset(x: 30)
-                                }
-                                .frame(height: 190)
-                                
-                                LightningBoltView()
-                            }
-                            
-                            HStack(spacing:0){
-                                let usedkWhRounded = Int(usedkWh.rounded())
-                                textStyle(text:"\(usedkWhRounded)", size: 21, weight: .bold)
-                                textStyle(text:"/1200 kWh", size: 21)
-                            }
-                            
-                            VStack(spacing: -210){
-                                Image("Squiggle1")
-                                Image("Squiggle2")
-                            }.frame(height:100)
-                        }
-                        .listRowBackground(Color.clear)
+                        liveUsageSection
                     }
                     .frame(height: 500)
                     .listSectionSeparator(.hidden)
                     
-                    Section{
-                        
-                        if currentHMHome?.accessories.isEmpty == false{
-                            VStack(alignment: .leading){
-                                textStyle(text: "Total Spend", size: 25, weight: .semibold)
-                                
-                                Button{
-                                    withAnimation(.spring(response: 1.0, dampingFraction: 0.8)) {
-                                        expandTotalSpend.toggle()
-                                    }
-                                }label:{
-                                    VStack(spacing: 30){
-                                        VStack(spacing: -7){
-                                            HStack(spacing: 20){
-                                                Image("MoneyBag").resizable().frame(width: 52, height: 59)
-                                                VStack(alignment:.leading){
-                                                    textStyle(text: "This Month You Spend", size: 18, weight: .semibold)
-                                                    textStyle(text: "Rp. ", size: 18)
-                                                }
-                                                Spacer()
-                                            }
-                                            
-                                            
-                                            HStack{
-                                                Spacer()
-                                                textStyle(text: expandTotalSpend ? "close" : "details")
-                                                Image(systemName: expandTotalSpend ? "chevron.up" : "chevron.down")
-                                                    .font(Font.system(size: 12))
-                                                    .foregroundStyle(Color.white)
-                                            }
-                                        }
-                                        
-                                        if expandTotalSpend{
-                                            
-                                            Capsule().fill(Color.white).frame(height: 1)
-                                            
-                                            DetailsView(currentHMHome: currentHMHome!)
-                                        }
-                                    }
-                                }.padding(.horizontal, 22)
-                                    .padding(.top, 22)
-                                    .padding(.bottom, expandTotalSpend ? 22 : 12)
-                                    .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-                            }
-                            
-                            .listRowBackground(Color.clear)
-                            
-                        }
-                        else{
-                            HStack{
-                                Spacer()
-                                textStyle(text: "Add accessory to your home")
-                                Spacer()
-                            }.padding().glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-                                .listRowBackground(Color.clear)
-                        }
-                    }
-                    .listSectionSeparator(.hidden)
+                    Section{totalSpendSection}
                     
                     VStack{
                         
@@ -253,116 +277,15 @@ struct MainPageView: View {
                 .listStyle(.plain)
                 
                 .sheet(isPresented: $showAddHomeSheet){
-                    
-                    ZStack{
-                        VStack(alignment: .leading, spacing: 30){
-                            HStack{
-                                Button{
-                                    showAddHomeSheet = false
-                                }label:{
-                                    Image(systemName: "xmark").foregroundStyle(Color.white)
-                                }
-                                Spacer()
-                                Text("New Home")
-                                Spacer()
-                                Button {
-                                    if let selectedCapacity = selection {
-                                        homeStore.createHome(homeName: newHomeName) { result in
-                                            switch result {
-                                            case .success(let newHome):
-                                                context.insert(Home(
-                                                    id: newHome.uniqueIdentifier,   // <- match dengan HMHome, bukan UUID baru
-                                                    VACapacity: EcapacityDict[selectedCapacity]!, homeName: newHome.name
-                                                ))
-                                                refreshHomeObjList()
-                                                showAddHomeSheet = false
-                                            case .failure(let error):
-                                                print("Gagal membuat home: \(error.localizedDescription)")
-                                                popUpError.toggle()
-                                            }
-                                        }
-                                    }
-                                } label: {
-                                    Image(systemName: "checkmark").resizable()
-                                        .scaledToFit().padding()
-                                        .frame(width: 40, height: 40)
-                                }.glassEffect(.clear)
-                            }
-                            
-                            textStyle(text: "Home Name", size:16)
-                            TextField("Home Name", text: $newHomeName).padding().background(Color.white).foregroundStyle(Color.black)
-                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray, lineWidth: 1.0))
-                            
-                            VStack(spacing: 20){
-                                
-                                
-                                Text("Select Electricity Capacity")
-                                    .font(.title3)
-                                    .bold()
-                                
-                                Button(action: {
-                                    withAnimation { isExpanded.toggle() }
-                                }) {
-                                    HStack {
-                                        Text(selection ?? "Electricity Capacity")
-                                            .foregroundColor(selection == nil ? .secondary : .primary)
-                                        Spacer()
-                                        
-                                        Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
-                                            .foregroundColor(.white)
-                                        
-                                    }
-                                    .padding()
-                                    .glassEffect(.clear)
-                                    .cornerRadius(10)
-                                }
-                                .padding(.horizontal,20)
-                                
-                                if isExpanded {
-                                    List(Ecapacity, id: \.self) { item in
-                                        Button(action: {
-                                            withAnimation {
-                                                selection = item
-                                                isExpanded = false
-                                            }
-                                        }) {
-                                            HStack {
-                                                Text(item)
-                                                    .foregroundColor(.primary)
-                                                Spacer()
-                                                if selection == item {
-                                                    Image(systemName: "checkmark")
-                                                        .foregroundColor(.blue)
-                                                }
-                                            }
-                                        }
-                                        .listRowBackground(Color.clear)
-                                        .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
-                                        .listRowSeparatorTint(Color.white.opacity(0.12))
-                                    }
-                                    .scrollContentBackground(.hidden)
-                                    .listStyle(.plain)
-                                    .frame(maxHeight: 290)
-                                    .background(.ultraThinMaterial)
-                                    .cornerRadius(28)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 28)
-                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                                    )
-                                    .padding(.horizontal, 20)
-                                }
-                            }
-                            Spacer()
-                        }.padding()
-                            .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-                        
-                        if popUpError{
-                            Text(res[1])
-                            Button("Close"){
-                                popUpError.toggle()
-                            }.padding().background(Color.blue)
-                        }
-                    }
+                    AddHomeSheet(
+                            isPresented: $showAddHomeSheet,
+                            newHomeName: $newHomeName,
+                            selection: $selection,
+                            isExpanded: $isExpanded,
+                            popUpError: $popUpError,
+                            res: res,
+                            onConfirm: confirmNewHome
+                        )
                 }
                 .onAppear{
                     updateSwiftData()
@@ -417,7 +340,7 @@ struct MainPageView: View {
                     print("add: \(home.name)")
                     // Default kwHlimit untuk home yang muncul dari luar app (bukan lewat sheet ini,
                     // misalnya dibuat via Home app) — user bisa edit limitnya nanti.
-                    context.insert(Home(id: home.uniqueIdentifier, VACapacity: 1200, homeName: home.name))
+                    context.insert(Home(id: home.uniqueIdentifier, VACapacity: 1200, homeName: home.name, priceperKwh: 0))
                 }
                 if home.isPrimary {
                     currentHMHome = home
@@ -452,7 +375,29 @@ struct MainPageView: View {
             print(error)
         }
     }
+    
+    func confirmNewHome() {
+        guard let selectedCapacity = selection else { return }
+        homeStore.createHome(homeName: newHomeName) { result in
+            switch result {
+            case .success(let newHome):
+                context.insert(Home(
+                    id: newHome.uniqueIdentifier,
+                    VACapacity: MainPageView.EcapacityDict[selectedCapacity]!,
+                    homeName: newHome.name,
+                    priceperKwh: MainPageView.priceperKwH[selectedCapacity]!
+                ))
+                refreshHomeObjList()
+                showAddHomeSheet = false
+            case .failure(let error):
+                print("Gagal membuat home: \(error.localizedDescription)")
+                popUpError.toggle()
+            }
+        }
+    }
 }
+
+
 
 
 struct DetailsView: View{
@@ -508,6 +453,124 @@ struct DetailsView: View{
                 
             }
         }.frame(maxHeight: 200)
+    }
+}
+
+struct AddHomeSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var newHomeName: String
+    @Binding var selection: String?
+    @Binding var isExpanded: Bool
+    @Binding var popUpError: Bool
+    var res: [String]
+    var onConfirm: () -> Void
+
+    var body: some View {
+        ZStack {
+            VStack(alignment: .leading, spacing: 30) {
+                header
+                textStyle(text: "Home Name", size: 16)
+                nameField
+                capacityPicker
+                Spacer()
+            }
+            .padding()
+            .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
+
+            if popUpError {
+                errorOverlay
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            Button { isPresented = false } label: {
+                Image(systemName: "xmark").foregroundStyle(Color.white)
+            }
+            Spacer()
+            Text("New Home")
+            Spacer()
+            Button(action: onConfirm) {
+                Image(systemName: "checkmark")
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                    .frame(width: 40, height: 40)
+            }
+            .glassEffect(.clear)
+        }
+    }
+
+    private var nameField: some View {
+        TextField("Home Name", text: $newHomeName)
+            .padding()
+            .background(Color.white)
+            .foregroundStyle(Color.black)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray, lineWidth: 1.0))
+    }
+
+    private var capacityPicker: some View {
+        VStack(spacing: 20) {
+            Text("Select Electricity Capacity").font(.title3).bold()
+
+            Button {
+                withAnimation { isExpanded.toggle() }
+            } label: {
+                HStack {
+                    Text(selection ?? "Electricity Capacity")
+                        .foregroundColor(selection == nil ? .secondary : .primary)
+                    Spacer()
+                    Image(systemName: "chevron.right").foregroundColor(.white)
+                }
+                .padding()
+                .glassEffect(.clear)
+                .cornerRadius(10)
+            }
+            .padding(.horizontal, 20)
+
+            if isExpanded {
+                capacityList
+            }
+        }
+    }
+
+    private var capacityList: some View {
+        List(MainPageView.Ecapacity, id: \.self) { item in
+            Button {
+                withAnimation {
+                    selection = item
+                    isExpanded = false
+                }
+            } label: {
+                HStack {
+                    Text(item).foregroundColor(.primary)
+                    Spacer()
+                    if selection == item {
+                        Image(systemName: "checkmark").foregroundColor(.blue)
+                    }
+                }
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
+            .listRowSeparatorTint(Color.white.opacity(0.12))
+        }
+        .scrollContentBackground(.hidden)
+        .listStyle(.plain)
+        .frame(maxHeight: 290)
+        .background(.ultraThinMaterial)
+        .cornerRadius(28)
+        .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .padding(.horizontal, 20)
+    }
+
+    private var errorOverlay: some View {
+        VStack {
+            Text(res[1])
+            Button("Close") { popUpError.toggle() }
+                .padding()
+                .background(Color.blue)
+        }
     }
 }
 

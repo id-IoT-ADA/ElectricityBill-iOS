@@ -13,12 +13,16 @@ class Home{
     var id: UUID
     var VACapacity: Int?
     var homeName: String
+    var priceperKwh: Double?
     
-    init(id : UUID, VACapacity: Int = 0, homeName: String) {
+    init(id : UUID, VACapacity: Int = 0, homeName: String, priceperKwh: Double) {
         self.id = id
         self.VACapacity = VACapacity
         self.homeName = homeName
+        self.priceperKwh = priceperKwh
     }
     
 }
+
+
 
