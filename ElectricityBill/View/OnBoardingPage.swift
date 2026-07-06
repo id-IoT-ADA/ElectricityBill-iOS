@@ -7,12 +7,18 @@
 
 import SwiftUI
 import HomeKit
+import SwiftData
 
 struct OnBoardingPage: View {
     @State private var currentPage = 0
     @State var selection: String? = nil
     @State var inputLimit: Int? = nil
     @State var isExpanded: Bool = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @Environment(\.modelContext) private var context
+    @State private var selectedHome: HMHome?
+    
+    
     
     init(){
         UIPageControl.appearance().currentPageIndicatorTintColor = .white
@@ -20,82 +26,76 @@ struct OnBoardingPage: View {
     }
     
     var isSelectionValid: Bool {
+        guard selectedHome != nil else { return false }
         if selection == "Others" {
             return inputLimit != nil && inputLimit! > 0
         }
         return selection != nil
     }
     
+    private var resolvedLimit: Int? {
+        if selection == "Others" {
+            return inputLimit
+        }
+        guard let selection else { return nil }
+        return SelectElectricity.VAlimit[selection]
+    }
+    
+    
     var body: some View {
-        NavigationStack{
-            ZStack{
-                Image("OnBoarding Background")
-                    .ignoresSafeArea()
-                
-                VStack{
-                    TabView(selection: $currentPage) {
-                        
-                        getHome()
-                            .tag(0)
-                        
-                        SelectElectricity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
-                            .tag(1)
-                        
-                    }
-                    // Forces the TabView to behave like a swipeable onboarding carousel
-                    .tabViewStyle(.page(indexDisplayMode: isExpanded ? .never : .always))
-                    .frame(height: 300)
+        ZStack{
+            Image("OnBoarding Background")
+                .ignoresSafeArea()
+            
+            VStack{
+                TabView(selection: $currentPage) {
                     
-                    if !isExpanded {
-                        NavigationLink(value: "NextPage") {
-                            Text("Done")
-                                .foregroundColor(isSelectionValid ? .primary : .secondary)
-                                .padding(.vertical, 14)
-                                .padding(.horizontal, 20)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Capsule())
-                                .opacity(isSelectionValid ? 1.0 : 0.4)
-                        }
-                        // 3. Keep the disabled modifier directly on the NavigationLink
-                        .disabled(!isSelectionValid)
-                        .padding()
+                    getHome(selectedHome: $selectedHome)
+                        .tag(0)
+                    
+                    SelectElectricity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
+                        .tag(1)
+                    
+                }
+                // Forces the TabView to behave like a swipeable onboarding carousel
+                .tabViewStyle(.page(indexDisplayMode: isExpanded ? .never : .always))
+                .frame(height: 300)
+                
+                if !isExpanded {
+                    Button {
+                        finishOnboarding()
+                    } label: {
+                        Text("Done")
+                            .foregroundColor(isSelectionValid ? .primary : .secondary)
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 20)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .opacity(isSelectionValid ? 1.0 : 0.4)
                     }
+                    .disabled(!isSelectionValid)
+                    .padding()
                 }
             }
         }
     }
-}
-
-struct WelcomePage: View {
-    
-    var body: some View {
-        
-        VStack (alignment: .center, spacing: 28){
-            Text("Welcome to Savergy!")
-                .font(.title2)
-                .bold()
-            Text("Savergy helps you monitor, control, and save on your home electricity, all from your phone.")
-                .lineLimit(3)
-                .multilineTextAlignment(.center)
-            
-        }
-        .padding(EdgeInsets(top: 41, leading: 30, bottom: 38, trailing: 25))
-        .frame(width: 359, height: 220, alignment: .center)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 34))
+    private func finishOnboarding() {
+        guard let selectedHome, let limit = resolvedLimit else { return }
+        context.insert(Home(id: selectedHome.uniqueIdentifier, kwHlimit: limit, homeName: selectedHome.name))
+        hasCompletedOnboarding = true
+        print("Home: \(selectedHome.name) with VA Limit: \(limit)")
     }
 }
 
+
+
 struct getHome: View {
     @StateObject private var homelist = HomeStore()
-    @State var selectedHome: HMHome?
+    @Binding var selectedHome: HMHome?
     
     var body: some View {
         NavigationStack {
             Group {
-                // 1. Show a loading indicator first while HomeKit communicates with iCloud
-//                if homelist.isLoading {
-//                    ProgressView("Connecting to HomeApp...")
-//                }
                 if homelist.homes.isEmpty {
                     ContentUnavailableView(
                         "No Homes Found",
@@ -138,15 +138,15 @@ struct getHome: View {
 
 struct SelectElectricity: View {
     
-    let Ecapacity: [String] = ["450 VA","900 VA (Subsidi)","900 VA(Non-subsidi)","1300 VA", "2200 VA", "Others"]
+    static let Ecapacity: [String] = ["450 VA","900 VA (Subsidi)","900 VA(Non-subsidi)","1300 VA", "2200 VA", "Others"]
     
     
-    var VAlimit = [
+    static let VAlimit = [
         "450 VA": 450,
         "900 VA (Subsidi)": 900,
         "900 VA(Non-subsidi)": 900,
         "1300 VA": 1300,
-        "2200 VA": 2200,
+        "2200 VA": 2200
     ]
     
     @Binding var isExpanded: Bool
@@ -156,7 +156,7 @@ struct SelectElectricity: View {
     
     var selectedlimit: Int? {
         guard let selection = selection else { return nil }
-        return VAlimit[selection]!
+        return SelectElectricity.VAlimit[selection]!
     }
     
     var body: some View {
@@ -186,16 +186,16 @@ struct SelectElectricity: View {
             .padding(.horizontal,20)
             
             if isExpanded {
-                List(Ecapacity, id: \.self) { item in
+                List(SelectElectricity.Ecapacity, id: \.self) { capacity in
                     Button(action: {
-                            selection = item
-                            isExpanded = false
+                        selection = capacity
+                        isExpanded = false
                     }) {
                         HStack {
-                            Text(item)
-                                .foregroundColor(item == "Others" ? .blue : .primary)
+                            Text(capacity)
+                                .foregroundColor(capacity == "Others" ? .blue : .primary)
                             Spacer()
-                            if selection == item {
+                            if selection == capacity {
                                 Image(systemName: "checkmark")
                                     .foregroundColor(.white)
                             }
@@ -217,12 +217,14 @@ struct SelectElectricity: View {
                 .padding(.horizontal, 20)
             }
             if selection == "Others"{
-                TextField("Input your KwH limit", value: $inputLimit, format: .number)
+                TextField("Input your VA limit", value: $inputLimit, format: .number)
                     .keyboardType(.numberPad)
                     .textFieldStyle(.roundedBorder)
                     .padding()
                     .transition(.opacity)
             }
+            
+            
         }
     }
 }

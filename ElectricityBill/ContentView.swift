@@ -10,27 +10,38 @@ import SwiftData
 import HomeKit
 
 struct ContentView: View {
-//    @State private var statusMessage = "Not Connected"
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var homeStore: HomeStore
-    
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
     var body: some View {
-        TabView {
-            Tab("Home", systemImage: "house.fill"){
-                MainPageView()
+        Group {
+            if hasCompletedOnboarding {
+                TabView {
+                    Tab("Home", systemImage: "house.fill"){
+                        MainPageView()
+                    }
+                    Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
+                        MonitoringView()
+                    }
+                    Tab("History", systemImage: "triangle") {
+                        EmptyView()
+                    }
+                }
+                .foregroundStyle(Color(.white))
+            } else {
+                OnBoardingPage()
             }
-            Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                MonitoringView()
-            }
-            Tab("History", systemImage: "triangle") {
-                EmptyView()
-            }
-        }.foregroundStyle(Color(.white))
-            
-        
+        }
     }
 }
 
 #Preview {
-    ContentView()
+    let container = try! ModelContainer(
+        for: Home.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    return ContentView()
+        .environmentObject(HomeStore())
+        .modelContainer(container)
 }

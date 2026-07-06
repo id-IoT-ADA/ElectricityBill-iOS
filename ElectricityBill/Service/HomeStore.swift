@@ -21,6 +21,7 @@ class HomeStore: NSObject, ObservableObject {
     private let browser = HMAccessoryBrowser()
 
     @Published var homes: [HMHome] = []
+    @Published var homeLocal: [Home] = []
     @Published var primaryHome: HMHome?
     /// Unpaired accessories found on the local network / BLE.
     @Published var foundAccessories: [HMAccessory] = []
@@ -146,6 +147,9 @@ extension HomeStore: HMHomeManagerDelegate {
     func homeManagerDidUpdateHomes(_ manager: HMHomeManager) {
         DispatchQueue.main.async {
             self.homes = manager.homes
+            self.homeLocal = manager.homes.map {
+                Home(id: $0.uniqueIdentifier, homeName: $0.name)
+            }
             self.primaryHome = manager.primaryHome ?? manager.homes.first
             self.refreshPaired()
         }
@@ -162,23 +166,44 @@ extension HomeStore: HMAccessoryBrowserDelegate {
         }
     }
     
-    func createHome(homeName: String) -> [String]{
-        var errMsg = ["", ""]
-        homeManager.addHome(withName: homeName){ [weak self] (newHome, error) in
-            
-            if let error = error {
-                errMsg = ["err", error.localizedDescription]
+//    func createHome(homeName: String) -> [String]{
+//        var errMsg = ["", ""]
+//        homeManager.addHome(withName: homeName){ [weak self] (newHome, error) in
+//            if let error = error {
+//                errMsg = ["err", error.localizedDescription]
+//                return
+//            }
+//            if let newHome = newHome {
+//                errMsg = ["success", "Successfully added home: \(newHome.name)"]
+//            }
+//        }
+//        
+//        return errMsg
+//        
+//        func accessoryBrowser(_ browser: HMAccessoryBrowser, didRemoveNewAccessory accessory: HMAccessory) {
+//            foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
+//        }
+//    }
+
+    func createHome(homeName: String, completion: @escaping (Result<HMHome, Error>) -> Void) {
+        homeManager.addHome(withName: homeName) { newHome, error in
+            if let error {
+                hkLog.error("addHome failed: \(error.localizedDescription, privacy: .public)")
+                DispatchQueue.main.async { completion(.failure(error)) }
                 return
             }
-            if let newHome = newHome {
-                errMsg = ["success", "Successfully added home: \(newHome.name)"]
+            guard let newHome else {
+                let unknownError = NSError(
+                    domain: "HomeStore", code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Home creation returned no home and no error"]
+                )
+                DispatchQueue.main.async { completion(.failure(unknownError)) }
+                return
             }
-        }
-        
-        return errMsg
-        
-        func accessoryBrowser(_ browser: HMAccessoryBrowser, didRemoveNewAccessory accessory: HMAccessory) {
-            foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
+            // homeLocal TIDAK perlu di-append manual di sini —
+            // homeManagerDidUpdateHomes akan otomatis terpanggil ulang oleh HomeKit
+            // dan mengisi ulang homeLocal dari manager.homes (sudah termasuk home baru ini).
+            DispatchQueue.main.async { completion(.success(newHome)) }
         }
     }
 }
