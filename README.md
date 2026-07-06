@@ -150,5 +150,3 @@ git clone https://github.com/yourusername/savergy.git
 ## License
 
 This project is currently intended for academic and research purposes.
-
-Update this section if an open-source license (such as MIT or Apache 2.0) is adopted.
