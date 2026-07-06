@@ -146,7 +146,7 @@ struct MainPageView: View {
                                 
                                 VStack{
                                     HStack{
-                                        textStyle(text:"\(currentHome?.kwHlimit ?? 1200)", size: 12, color: .white.opacity(0.55))
+                                        textStyle(text:"\(currentHome?.VACapacity ?? 1200)", size: 12, color: .white.opacity(0.55))
                                             .padding(.horizontal, 7)
                                             .padding(.vertical, 2)
                                             .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
@@ -272,7 +272,7 @@ struct MainPageView: View {
                                             case .success(let newHome):
                                                 context.insert(Home(
                                                     id: newHome.uniqueIdentifier,   // <- match dengan HMHome, bukan UUID baru
-                                                    kwHlimit: EcapacityDict[selectedCapacity]!, homeName: newHome.name
+                                                    VACapacity: EcapacityDict[selectedCapacity]!, homeName: newHome.name
                                                 ))
                                                 refreshHomeObjList()
                                                 showAddHomeSheet = false
@@ -417,7 +417,7 @@ struct MainPageView: View {
                     print("add: \(home.name)")
                     // Default kwHlimit untuk home yang muncul dari luar app (bukan lewat sheet ini,
                     // misalnya dibuat via Home app) — user bisa edit limitnya nanti.
-                    context.insert(Home(id: home.uniqueIdentifier, kwHlimit: 1200, homeName: home.name))
+                    context.insert(Home(id: home.uniqueIdentifier, VACapacity: 1200, homeName: home.name))
                 }
                 if home.isPrimary {
                     currentHMHome = home
