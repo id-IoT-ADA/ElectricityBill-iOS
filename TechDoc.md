@@ -37,8 +37,10 @@ Our app can still run even without the EnergyKit Framework since the purpose of 
 
 ## About Accessibility and Localization
 - Accessibility: Larger Text
+
 at first, this application main target is for young people who lived abroad. but then, throughout the building process we found that this app may serves a larger audience with a higher range of age. By applying larger text, it would help people in the higher range of the age spectrum since they may have a limited vision.
 - Localization: Bahasa Indonesia
+
 Building this app with the "anak rantau" in mind, we choose to implement bahasa indonesia as part of the localization. Our first target would be indonesian since this app is currently build in Indonesia.
 
 ## About Privacy
