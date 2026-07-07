@@ -24,8 +24,8 @@ struct ContentView: View {
                     Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
                         MonitoringView()
                     }
-                    Tab("History", systemImage: "triangle") {
-                        EmptyView()
+                    Tab("Insight", systemImage: "triangle") {
+                        InsightView()
                     }
                 }
                 .foregroundStyle(Color(.white))

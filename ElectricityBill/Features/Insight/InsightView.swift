@@ -11,8 +11,8 @@ struct InsightView: View {
     @StateObject var viewModel = InsightViewModel()
     @State var currentPage = 0
     private var usageBodyMessage: String {
-            viewModel.pages.first(where: { $0.id == 0 })?.card?.bodyMessage ?? ""
-        }
+        viewModel.pages.first(where: { $0.id == 0 })?.card?.bodyMessage ?? ""
+    }
     
     
     var body: some View {
@@ -57,52 +57,40 @@ struct InsightView: View {
         }
     }
     
-//        private var logo: some View {
-//            LightningBolt()
-//                .fill(Color.green.opacity(0.85))
-//                .overlay(
-//                    LightningBolt()
-//                        .stroke(Color.white.opacity(0.4), lineWidth: 1.5)
-//                )
-//                .shadow(color: .green.opacity(0.6), radius: 20)
-//                .frame(width: 70, height: 110)
-//        }
-
     
     private var mostUsedSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             textStyle(text: "Most Used", size: 22, weight: .semibold)
             
-//            VStack(spacing: 0) {
-//                ForEach(Array($viewModel.mostUsedDevices.enumerated()), id: \.element.id) { index, device in
-//                    HStack(spacing: 14) {
-//                        ZStack {
-//                            RoundedRectangle(cornerRadius: 10)
-//                                .fill(Color.white.opacity(0.12))
-//                                .frame(width: 40, height: 40)
-//                            Image((systemName: device.))
-//                                .foregroundStyle(Color.white)
-//                        }
-//                        
-//                        textStyle(text: device.name, size: 15, weight: .medium)
-//                        
-//                        Spacer()
-//                        
-//                        textStyle(text: device.formattedDuration, size: 14, color: .white.opacity(0.55))
-//                    }
-//                    .padding(.vertical, 12)
-//                    
-//                    if index < viewModel.mostUsedDevices.count - 1 {
-//                        Divider().overlay(Color.white.opacity(0.15))
-//                    }
-//                }
-//            }
-//            .padding(.horizontal, 16)
-//            .padding(.vertical, 4)
-//            .glassEffect(.clear, in: .rect(cornerRadius: 20))
+            ForEach(Array(viewModel.mostUsedDevices.enumerated()), id: \.element.id) { index, device in
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: device.icon)
+                            .foregroundStyle(Color.white)
+                    }
+                    
+                    textStyle(text: device.name, size: 15, weight: .medium)
+                    
+                    Spacer()
+                    
+                    textStyle(text: device.usageRecords.formattedDuration(forMonth: .now), size: 14, color: .white.opacity(0.55))
+                }
+                .padding(.vertical, 12)
+                
+                if index < viewModel.mostUsedDevices.count - 1 {
+                    Divider().overlay(Color.white.opacity(0.15))
+                }
+            }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+        .glassEffect(.clear, in: .rect(cornerRadius: 20))
     }
 }
+
 
 private struct InsightCardView: View {
     let card: EnergyInsightCard?

@@ -48,6 +48,21 @@ extension DeviceUsageRecord {
     }
 }
 
+extension Array where Element == DeviceUsageRecord {
+    func totalDurationMinutes(forMonth month: Date, calendar: Calendar = .current) -> Int {
+        Int(self
+            .filter { calendar.isDate($0.month, equalTo: month, toGranularity: .month) }
+            .reduce(0.0) { $0 + $1.durationInMinutes })
+    }
+
+    func formattedDuration(forMonth month: Date, calendar: Calendar = .current) -> String {
+        let totalMinutes = totalDurationMinutes(forMonth: month, calendar: calendar)
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+    }
+}
+
 struct monthlyUsageSummary {
     let currentmonthkwh: Double
     let previousmonthkwh: Double

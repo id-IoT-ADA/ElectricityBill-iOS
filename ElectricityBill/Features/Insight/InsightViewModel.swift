@@ -22,7 +22,7 @@ final class InsightViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     
     let monthlySummary = MockEnergyData.monthlySummary
-    //    let mostUsedDevices = MockEnergyData.mostUsedDevices
+    let mostUsedDevices = MockEnergyData.mostUsedDevices
     
     private let generator = EnergyInsightGenerator()
     private var didLoad = false
