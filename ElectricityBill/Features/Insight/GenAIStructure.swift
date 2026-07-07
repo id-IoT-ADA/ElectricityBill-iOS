@@ -13,22 +13,31 @@ struct EnergyInsightCard {
     @Guide(description: "An encouraging title under 5 words focusing on saving energy.")
     var title: String
 
-    @Guide(description: "A friendly overview under 20 words highlighting percentage drop and savings in Rupiah (Rp).")
+    @Guide(description: "A friendly overview under 20 words highlighting percentage drop and rupiah differences in Rupiah (Rp).")
     var bodyMessage: String
 }
 
 enum InsightPrompts {
-    static func buildPromptForSavings(percent: Int, rupiahSaved: Int) -> String {
+    static func buildPromptForSavings(percent: Int, rupiahdiff: Int) -> String {
+        let isIncrease = percent < 0
+        let direction = isIncrease ? "increase" : "decrease"
+        let absPercent = abs(percent)
+        let absRupiah = abs(rupiahdiff)
+
         return """
-            Generate an energy insight card text based strictly on the provided user values.
+            Generate an energy insight card text based strictly on the facts below.
+
+            Facts (already determined — do not reinterpret, recalculate, or contradict these):
+            - Usage direction this month vs. last month: \(direction)
+            - Percent change: \(absPercent)%
+            - Rupiah difference: Rp\(absRupiah)
 
             Rules:
             - Do not calculate or invent any new metrics.
-            - Treat negative percentages as spikes and positive as drops.
-
-            Metrics:
-            - Percent Energy Variation: \(percent)% drop
-            - Saved Money Amount: Rp\(rupiahSaved)
+            - Describe the change using the word "\(direction)" (or a natural synonym like "up"/"down") — never state the opposite direction.
+            - Always present both numbers as positive; never show a minus sign.
+            - If direction is "increase", the tone should gently warn the user to watch their usage.
+            - If direction is "decrease", the tone should be congratulatory about the savings.
             """
     }
 

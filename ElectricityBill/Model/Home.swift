@@ -15,6 +15,8 @@ class Home{
     var homeName: String
     var priceperKwh: Double?
     
+    @Relationship(deleteRule: .cascade) var devices = [DeviceModel]()
+    
     init(id : UUID, VACapacity: Int = 0, homeName: String, priceperKwh: Double) {
         self.id = id
         self.VACapacity = VACapacity
