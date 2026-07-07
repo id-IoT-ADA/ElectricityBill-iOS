@@ -29,6 +29,10 @@ class HomeStore: NSObject, ObservableObject {
     @Published var pairedAccessories: [HMAccessory] = []
     @Published var isSearching = false
     @Published var statusMessage: String?
+    /// Set the moment an accessory finishes pairing via `add(_:)` (a genuine
+    /// user action) — not on the initial load of already-paired devices.
+    /// Views observe this to auto-dismiss the "Add Accessory" flow.
+    @Published var lastPairedAccessoryID: UUID?
 
     override init() {
         super.init()
@@ -101,6 +105,7 @@ class HomeStore: NSObject, ObservableObject {
                 self.observe(accessory)
                 self.foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
                 self.refreshPaired()
+                self.lastPairedAccessoryID = accessory.uniqueIdentifier
                 self.statusMessage = "Added \(accessory.name)"
             }
         }

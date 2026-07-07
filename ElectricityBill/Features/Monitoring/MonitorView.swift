@@ -6,20 +6,32 @@
 //
 
 import SwiftUI
+import HomeKit
+import SwiftData
 
 struct MonitoringView: View {
-    @State var isActive: Bool = false
+    @EnvironmentObject private var homeStore: HomeStore
+    @Environment(\.modelContext) private var context
     @State private var showAddDevice = false
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Image("OnBoarding Background")
-                    .ignoresSafeArea()
-
-                DeviceListRow(isActive: $isActive)
+            List(homeStore.pairedAccessories, id: \.uniqueIdentifier)  { accessory in
+                NavigationLink {
+                    DeviceEnergyView(accessory: accessory, context: context)   // oper context
+                        .navigationTitle(accessory.name)
+                } label: {
+                    Text(accessory.name)
+                }
             }
-            .navigationTitle("Devices")
+            .scrollContentBackground(.hidden)
+            .background(
+                Image("OnBoarding Background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            )
+            .navigationTitle("Monitoring")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
