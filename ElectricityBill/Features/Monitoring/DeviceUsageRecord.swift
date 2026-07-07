@@ -12,20 +12,23 @@ import SwiftData
 class DeviceUsageRecord {
     var id: UUID
     var month: Date
-    var durationMinutes: Int
+    var startTime: Int
+    var endTime: Int?
     var kWh: Double
     var device: DeviceModel?
 
     init(
         id: UUID = UUID(),
         month: Date,
-        durationMinutes: Int,
+        startTime: Int,
+        endTime: Int?,
         kWh: Double,
         device: DeviceModel? = nil
     ) {
         self.id = id
         self.month = month
-        self.durationMinutes = durationMinutes
+        self.startTime = startTime
+        self.endTime = endTime
         self.kWh = kWh
         self.device = device
     }
