@@ -9,6 +9,7 @@ import SwiftUI
 import CoreBluetooth
 
 struct AddDeviceView: View {
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var ble = BLEProvisioningManager()
     @State private var provisioningPeripheral: CBPeripheral?
     @State private var showAddAccessory = false
@@ -76,7 +77,6 @@ struct AddDeviceView: View {
             WiFiCredentialsSheet(ble: ble, deviceName: peripheral.name ?? "Device")
         }
         .fullScreenCover(isPresented: $showAddAccessory, onDismiss: {
-            // Back to a clean scan state in case the user wants to add another device.
             if ble.status == .ready { ble.startScan() }
         }) {
             AddAccessoryFlow { showAddAccessory = false }

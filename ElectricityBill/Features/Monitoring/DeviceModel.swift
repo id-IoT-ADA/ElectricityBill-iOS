@@ -47,6 +47,9 @@ class DeviceModel {
     }
     
     var totalDurationMinutes: Int {
-        usageRecords.reduce(0) { $0 + $1.durationMinutes }
+        usageRecords.reduce(0) { total, record in
+            guard let end = record.endTime else { return total }
+            return total + (end - record.startTime)
+        }
     }
 }
