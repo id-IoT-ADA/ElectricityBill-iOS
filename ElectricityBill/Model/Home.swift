@@ -29,6 +29,14 @@ class Home{
         return Double(VACapacity ?? 0) * 0.8
     }
     
+    func calcCurrentlyUsedWatt() -> Double {
+        var runningWatt: Double = 0.0
+        for acc in devices{
+            if acc.isActive == true { runningWatt += Double(acc.VARating!) * 0.8}
+        }
+        return runningWatt
+    }
+    
     func calculateTotalKwH(month: Date) -> Double {
         devices.reduce(0.0) { total, accessory in
             

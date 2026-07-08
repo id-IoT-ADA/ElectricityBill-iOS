@@ -102,15 +102,9 @@ struct LightningBoltView: View {
 struct MainPageView: View {
     @EnvironmentObject private var homeStore: HomeStore
     @EnvironmentObject private var appState: AppState
-    @State var usedWatt: Double = 0.0
     @State var expandTotalSpend = false
     @State var totalSpend : Double = 0.0
     @State var showAddHomeSheet : Bool = false
-    let preferredOrder = [
-        HMAccessoryCategoryTypeLightbulb,
-        HMAccessoryCategoryTypeAirConditioner,
-        HMAccessoryCategoryTypeTelevision
-    ]
     @Environment(\.modelContext) private var context
     @State var homeObjList: [Home] = []
     
@@ -122,19 +116,6 @@ struct MainPageView: View {
     @State var res : [String] = ["", ""]
     @State var popUpError: Bool = false
     
-    @Query(
-        filter: #Predicate<DeviceModel> { device in
-            device.isActive == true
-        }) var activeAccessories: [DeviceModel]
-    
-    func calcUsedWatt() -> Double {
-        var runningWatt: Double = 0.0
-        for acc in activeAccessories{
-            if acc.home == appState.currentHome{ runningWatt += Double(acc.VARating!) * 0.8}
-        }
-        return runningWatt
-    }
-    
     private var liveUsageSection: some View {
         VStack(alignment: .center, spacing: 10) {
             Spacer()
@@ -144,13 +125,14 @@ struct MainPageView: View {
                 Spacer()
             }
             
+            let usedWatt = appState.currentHome?.calcCurrentlyUsedWatt() ?? 0
             ZStack {
                 usageAxisLabels
-                LightningBoltView(usedWatt: calcUsedWatt())
+                LightningBoltView(usedWatt: usedWatt)
             }
             
             HStack(spacing: 0) {
-                let usedWattRounded = Int(calcUsedWatt().rounded())
+                let usedWattRounded = Int(usedWatt.rounded())
                 textStyle(text: "\(usedWattRounded)", size: 21, weight: .bold)
                 textStyle(text: "/\(appState.currentHome?.wattLimit() ?? 0) watt", size: 21)
             }
@@ -271,13 +253,13 @@ struct MainPageView: View {
     }
     
     var body: some View {
-        NavigationStack{
             ZStack{
                 Image("Background").resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
                 
                 if appState.currentHome?.VACapacity == 0 {
+                    
                     VStack{
                         SelectElectricity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
                         
@@ -326,11 +308,11 @@ struct MainPageView: View {
                         )
                     }
                     .onAppear{
-                        updateSwiftHomeData()
+//                        updateSwiftHomeData()
                         totalSpend = calculateTotalSpend()
                     }
-                    .onChange(of: homeStore.homes) { _ in
-                        updateSwiftHomeData()
+                    .onChange(of: homeStore.homes) {
+//                        updateSwiftHomeData()
                         totalSpend = calculateTotalSpend()
                     }
                     
@@ -346,96 +328,13 @@ struct MainPageView: View {
                         Image(systemName:"plus")
                     }.foregroundStyle(Color.white)
                 }
-                
-                ToolbarItem(placement: .topBarTrailing){
-                    Menu{
-                        ForEach(homeObjList, id: \.self){ home in
-                            Button{
-                                appState.currentHome = home
-                            }label:{
-                                textStyle(text: home.homeName, size: 16)
-                                if appState.currentHome! == home{
-                                    textStyle(text: "Current Location", size: 12)
-                                    Image(systemName: "checkmark")
-                                }
-                                
-                            }
-                        }
-                    }label:{
-                        Image(systemName: "ellipsis")
-                    }.foregroundStyle(Color.white)
-                }
             }
-        }
-        
     }
     
     func calculateTotalSpend() -> Double {
         appState.currentHome!.calculateTotalKwH(month: Date()) * appState.currentHome!.priceperKwh!
     }
     
-    func updateSwiftHomeData(){
-        let descriptor = FetchDescriptor<Home>()
-        do {
-            var items = try context.fetch(descriptor)
-            let idsInData = Set(items.map(\.id))
-            var primaryHome: HMHome? = nil
-            var updateCurrHome: Bool = false
-            
-            for home in homeStore.homes {
-                if !idsInData.contains(home.uniqueIdentifier) {
-                    print("add: \(home.name)")
-                    // Default kwHlimit untuk home yang muncul dari luar app (bukan lewat sheet ini,
-                    // misalnya dibuat via Home app) — user bisa edit limitnya nanti.
-                    let homeObj = Home(id: home.uniqueIdentifier, VACapacity: 0, homeName: home.name, priceperKwh: 0)
-                    context.insert(homeObj)
-                    
-                    for acc in home.accessories {
-                        var cat = ""
-                        switch acc.category.categoryType {
-                        case HMAccessoryCategoryTypeLightbulb: cat = "Lamp"
-                        case HMAccessoryCategoryTypeAirConditioner: cat = "AC"
-                        case  HMAccessoryCategoryTypeTelevision: cat = "Television"
-                        default: cat = "Others"
-                        }
-                        
-                        let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: cat, VARating: 5, home: homeObj)
-                        context.insert(accessoryObj)
-                    }
-                    // MOCK DATA
-                    let categories = ["Lamp", "Television", "Others", "AC"]
-                    let VAs = [5, 15, 150, 900]
-                    for i in 0..<7 {
-                        
-                        let accessoryObj = DeviceModel(id: UUID(), name: "\(home.name) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: homeObj)
-                        
-                        let deviceUsageObj = DeviceUsageRecord(startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
-                        context.insert(accessoryObj)
-                        context.insert(deviceUsageObj)
-                    }
-                }
-                if home.isPrimary {
-                    primaryHome = home
-                }
-            }
-            
-            // Hapus entry yang HMHome-nya sudah tidak ada — match by id, bukan nama
-            items = try context.fetch(descriptor)
-            let currentHomeKitIDs = Set(homeStore.homes.map(\.uniqueIdentifier))
-            for homeObj in items where !currentHomeKitIDs.contains(homeObj.id) {
-                print("delete: \(homeObj.homeName)")
-                if (appState.currentHome == homeObj){ updateCurrHome = true }
-                context.delete(homeObj)
-            }
-            
-            refreshHomeObjList(updateCurrHome: updateCurrHome, primaryHome: primaryHome)
-        } catch {
-            print(error)
-        }
-    }
-    
-    /// Refresh murah: cuma re-fetch + sort + publish ke homeObjList.
-    /// Aman dipanggil langsung setelah insert home baru, tanpa menunggu homeStore.homes sync.
     func refreshHomeObjList(updateCurrHome: Bool, primaryHome: HMHome? = nil) {
         let descriptor = FetchDescriptor<Home>(sortBy: [SortDescriptor(\.homeName)])
         do {
@@ -487,6 +386,8 @@ func formatToIDR(amount: Double) -> String {
     }
 }
 
+let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
+
 let logoNames = [
     "Lamp" : "lightbulb.min",
     "AC" : "air.conditioner.horizontal",
@@ -496,8 +397,6 @@ let logoNames = [
 
 struct DetailsView: View{
     @EnvironmentObject var appState: AppState
-    
-    private let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
     
     @Query var accessories: [DeviceModel]
     
