@@ -7,38 +7,40 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 struct InsightPage: Identifiable {
     let id: Int
     var card: EnergyInsightCard?
 }
 
-@MainActor
-final class InsightViewModel: ObservableObject {
+//@MainActor
+class InsightViewModel: ObservableObject {
     @Published private(set) var pages: [InsightPage] = [
         InsightPage(id: 0, card: nil),
         InsightPage(id: 1, card: nil)
     ]
     @Published private(set) var isLoading = false
     
-    let monthlySummary = MockEnergyData.monthlySummary
-    let mostUsedDevices = MockEnergyData.mostUsedDevices
+//    let monthlySummary = MockEnergyData.monthlySummary
+//    let mostUsedDevices = MockEnergyData.mostUsedDevices
     
     private let generator = EnergyInsightGenerator()
     private var didLoad = false
     
-    func loadInsightsIfNeeded() async {
+    func loadInsightsIfNeeded(currHome: Home) async {
         guard !didLoad else { return }
         didLoad = true
         isLoading = true
         defer { isLoading = false }
         
+        let currHomeMonthlySummary = currHome.getMonthlySummary()
         async let usageCard = resolveCard(
             prompt: InsightPrompts.buildPromptForSavings(
-                percent: Int(monthlySummary.percentChange.rounded()),
-                rupiahdiff: Int(monthlySummary.rupiahdiff.rounded())
+                percent: Int(currHomeMonthlySummary.percentChange.rounded()),
+                rupiahdiff: Int(currHomeMonthlySummary.rupiahdiff.rounded())
             ),
-            fallback: Self.fallbackUsageCard(summary: monthlySummary)
+            fallback: Self.fallbackUsageCard(summary: currHomeMonthlySummary)
         )
         
         //        async let recommendationCard = resolveCard(
@@ -49,10 +51,10 @@ final class InsightViewModel: ObservableObject {
         //            fallback: Self.fallbackRecommendationCard(device: mostUsedDevices.first)
         //        )
         
-        pages = [
-            InsightPage(id: 0, card: await usageCard),
+//        pages = [
+//            InsightPage(id: 0, card: await usageCard),
             //            InsightPage(id: 1, card: await recommendationCard)
-        ]
+//        ]
     }
     
     private func resolveCard(prompt: String, fallback: EnergyInsightCard) async -> EnergyInsightCard {

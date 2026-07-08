@@ -5,14 +5,17 @@
 //  Created by Keira on 02/07/26.
 //
 
+import SwiftData
 import SwiftUI
 
 struct InsightView: View {
-    @StateObject var viewModel = InsightViewModel()
+    @State var viewModel = InsightViewModel()
     @State var currentPage = 0
     private var usageBodyMessage: String {
         viewModel.pages.first(where: { $0.id == 0 })?.card?.bodyMessage ?? ""
     }
+    @EnvironmentObject var appState: AppState
+    @Query var accessories: [DeviceModel]
     
     
     var body: some View {
@@ -53,7 +56,7 @@ struct InsightView: View {
             }
         }
         .task {
-            await viewModel.loadInsightsIfNeeded()
+            await viewModel.loadInsightsIfNeeded(currHome: appState.currentHome!)
         }
     }
     
@@ -62,26 +65,28 @@ struct InsightView: View {
         VStack(alignment: .leading, spacing: 14) {
             textStyle(text: "Most Used", size: 22, weight: .semibold)
             
-            ForEach(Array(viewModel.mostUsedDevices.enumerated()), id: \.element.id) { index, device in
-                HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: 40, height: 40)
-//                        Image(systemName: device.icon)
-//                            .foregroundStyle(Color.white)
+            ForEach(accessories) {  device in
+                if appState.currentHome == device.home {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.12))
+                                .frame(width: 40, height: 40)
+                            Image(systemName: logoNames[device.category]!)
+                                .foregroundStyle(Color.white)
+                        }
+                        
+                        textStyle(text: device.name, size: 15, weight: .medium)
+                        
+                        Spacer()
+                        
+                        textStyle(text: formattedDuration(totalDurationMinutes: device.getTotalDuration(month: Date(), unit: .m)), size: 14, color: .white.opacity(0.55))
                     }
+                    .padding(.vertical, 12)
                     
-                    textStyle(text: device.name, size: 15, weight: .medium)
-                    
-                    Spacer()
-                    
-                    textStyle(text: device.usageRecords.formattedDuration(forMonth: .now), size: 14, color: .white.opacity(0.55))
-                }
-                .padding(.vertical, 12)
-                
-                if index < viewModel.mostUsedDevices.count - 1 {
-                    Divider().overlay(Color.white.opacity(0.15))
+//                    if index < viewModel.mostUsedDevices.count - 1 {
+//                        Divider().overlay(Color.white.opacity(0.15))
+//                    }
                 }
             }
         }
