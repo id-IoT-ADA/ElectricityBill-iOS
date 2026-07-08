@@ -118,6 +118,8 @@ extension DeviceModel{
         
         return totalDuration
     }
+    
+    
 }
 
 enum Unit: String{

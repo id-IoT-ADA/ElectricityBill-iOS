@@ -35,33 +35,40 @@ class DeviceUsageRecord {
     
 }
 
-extension DeviceUsageRecord {
-    var durationInMinutes: Double {
-        guard let endTime else { return 0 }
-        return endTime.timeIntervalSince(startTime) / 60
-    }
+//extension DeviceUsageRecord {
+//    var durationInMinutes: Double {
+//        guard let endTime else { return 0 }
+//        return endTime.timeIntervalSince(startTime) / 60
+//    }
     
-    private func estimatedKWh(va: DeviceModel, durationInMinutes: Double) -> Double {
-        guard let va = va.VARating, va > 0 else { return 0 }
-        let hours = durationInMinutes / 60
-        return (Double(va) * hours) / 1000
-    }
+//    private func estimatedKWh(va: DeviceModel, durationInMinutes: Double) -> Double {
+//        guard let va = va.VARating, va > 0 else { return 0 }
+//        let hours = durationInMinutes / 60
+//        return (Double(va) * hours) / 1000
+//    }
+//}
+
+func formattedDuration(totalDurationMinutes: Double) -> String {
+    let totalMinutes = Int(totalDurationMinutes)
+    let hours = totalMinutes / 60
+    let minutes = totalMinutes % 60
+    return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
 }
 
-extension Array where Element == DeviceUsageRecord {
-    func totalDurationMinutes(forMonth month: Date, calendar: Calendar = .current) -> Int {
-        Int(self
-            .filter { calendar.isDate($0.startTime, equalTo: month, toGranularity: .month) }
-            .reduce(0.0) { $0 + $1.durationInMinutes })
-    }
-
-    func formattedDuration(forMonth month: Date, calendar: Calendar = .current) -> String {
-        let totalMinutes = totalDurationMinutes(forMonth: month, calendar: calendar)
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
-        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-    }
-}
+//extension Array where Element == DeviceUsageRecord {
+//    func totalDurationMinutes(forMonth month: Date, calendar: Calendar = .current) -> Int {
+//        Int(self
+//            .filter { calendar.isDate($0.startTime, equalTo: month, toGranularity: .month) }
+//            .reduce(0.0) { $0 + $1.durationInMinutes })
+//    }
+//
+//    func formattedDuration(forMonth month: Date, calendar: Calendar = .current) -> String {
+//        let totalMinutes = totalDurationMinutes(forMonth: month, calendar: calendar)
+//        let hours = totalMinutes / 60
+//        let minutes = totalMinutes % 60
+//        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+//    }
+//}
 
 struct monthlyUsageSummary {
     let currentmonthkwh: Double
