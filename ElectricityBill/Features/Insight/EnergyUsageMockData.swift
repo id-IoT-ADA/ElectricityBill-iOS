@@ -25,9 +25,9 @@ enum MockEnergyData {
             return DeviceUsageRecord(month: monthStart, startTime: start, endTime: end, kWh: kWh)
         }
         
-        let ac1 = DeviceModel(id: UUID(), name: "AC Kamar Keira", icon: "wind", VARating: 900)
-        let lamp = DeviceModel(id: UUID(), name: "Lampu Kamar Tidur Karen", icon: "lightbulb.fill", VARating: 15)
-        let ac2 = DeviceModel(id: UUID(), name: "AC Kamar Ikhwan", icon: "wind", VARating: 900)
+        let ac1 = DeviceModel(id: UUID(), name: "AC Kamar Keira", category: "AC", VARating: 900)
+        let lamp = DeviceModel(id: UUID(), name: "Lampu Kamar Tidur Karen", category: "Lamp", VARating: 15)
+        let ac2 = DeviceModel(id: UUID(), name: "AC Kamar Ikhwan", category: "AC", VARating: 900)
         
         let assignments: [(DeviceModel, DeviceUsageRecord)] = [
             // This month

@@ -68,8 +68,8 @@ struct InsightView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(Color.white.opacity(0.12))
                             .frame(width: 40, height: 40)
-                        Image(systemName: device.icon)
-                            .foregroundStyle(Color.white)
+//                        Image(systemName: device.icon)
+//                            .foregroundStyle(Color.white)
                     }
                     
                     textStyle(text: device.name, size: 15, weight: .medium)
