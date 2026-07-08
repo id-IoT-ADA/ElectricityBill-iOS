@@ -372,8 +372,8 @@ struct MainPageView: View {
     
     func calculateTotalSpend() -> Double {
         appState.currentHome!.devices.reduce(0.0) { total, accessory in
-            let currentMonthNumber = Calendar.current.component(.month, from: Date())
-            let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
+            
+            let hoursUsed = accessory.getTotalDuration(month: Date(), unit: .hr)
             let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
             let electricityRate = appState.currentHome!.priceperKwh!
             
@@ -415,8 +415,8 @@ struct MainPageView: View {
                     for i in 0..<7 {
                         
                         let accessoryObj = DeviceModel(id: UUID(), name: "\(home.name) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: homeObj)
-                        let currentMonthNumber = Calendar.current.component(.month, from: Date())
-                        let deviceUsageObj = DeviceUsageRecord(month: currentMonthNumber, startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
+                        
+                        let deviceUsageObj = DeviceUsageRecord(month: Date(), startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
                         context.insert(accessoryObj)
                         context.insert(deviceUsageObj)
                     }
@@ -494,17 +494,17 @@ func formatToIDR(amount: Double) -> String {
     }
 }
 
+let logoNames = [
+    "Lamp" : "lightbulb.min",
+    "AC" : "air.conditioner.horizontal",
+    "Television" : "tv",
+    "Others" : "macbook.and.iphone"
+]
+
 struct DetailsView: View{
     @EnvironmentObject var appState: AppState
     
     private let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
-    
-    private let logoNames = [
-        "Lamp" : "lightbulb.min",
-        "AC" : "air.conditioner.horizontal",
-        "Television" : "tv",
-        "Others" : "macbook.and.iphone"
-    ]
     
     @Query var accessories: [DeviceModel]
     
@@ -521,9 +521,8 @@ struct DetailsView: View{
                 
                 
                 if let accessories = groupedItems[categoryType]{
-                    let currentMonthNumber = Calendar.current.component(.month, from: Date())
                     let totalPerGroup = accessories.reduce(0) { total, accessory in
-                        let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
+                        let hoursUsed = accessory.getTotalDuration(month: Date(), unit: .hr)
                         let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
                         let electricityRate = appState.currentHome!.priceperKwh!
                         

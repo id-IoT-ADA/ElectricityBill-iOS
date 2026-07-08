@@ -60,7 +60,7 @@ enum MockEnergyData {
             devices
                 .flatMap(\.usageRecords)
                 .filter { calendar.isDate($0.month, equalTo: month, toGranularity: .month) }
-                .reduce(0) { $0 + $1.kWh }
+                .reduce(0) { $0 + $1.kWh! }
         }
         
         let currentKwh = totalKwh(for: now)

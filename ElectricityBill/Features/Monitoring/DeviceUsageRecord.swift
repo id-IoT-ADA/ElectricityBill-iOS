@@ -14,15 +14,15 @@ class DeviceUsageRecord {
     var month: Date
     var startTime: Date
     var endTime: Date?
-    var kWh: Double
+    var kWh: Double?
     var device: DeviceModel?
 
     init(
         id: UUID = UUID(),
         month: Date,
         startTime: Date,
-        endTime: Date?,
-        kWh: Double,
+        endTime: Date? = nil,
+        kWh: Double? = 0.0,
         device: DeviceModel? = nil
     ) {
         self.id = id

@@ -95,26 +95,28 @@ extension DeviceModel{
     private func closeSession(_ record: DeviceUsageRecord, at date: Date) {
         record.endTime = date
         //        record.kWh = estimatedKWh(durationInMinutes: record.durationInMinutes)
-        func getTotalDuration(month: Date?, unit: Unit) -> Double{
-            
-            let divider = unit == .hr ? 3600.0 : 60.0
-            var totalDuration: Double {
-                var totalDur = usageRecords.reduce(0) { total, record in
-                    guard month != nil, record.month == month, let endTime = record.endTime else { return total }
-                    return total + (endTime.timeIntervalSince(record.startTime) / divider)
-                }
-                
-                if isActive,
-                   let currentUsage = usageRecords.last(where: { $0.endTime == nil }){
-                    
-                    totalDur += Date.now.timeIntervalSince(currentUsage.startTime) / divider
-                }
-                
-                return totalDur
+        getTotalDuration(month: nil, unit: .hr)
+    }
+    
+    func getTotalDuration(month: Date?, unit: Unit) -> Double{
+        
+        let divider = unit == .hr ? 3600.0 : 60.0
+        var totalDuration: Double {
+            var totalDur = usageRecords.reduce(0) { total, record in
+                guard month != nil, record.month == month, let endTime = record.endTime else { return total }
+                return total + (endTime.timeIntervalSince(record.startTime) / divider)
             }
             
-            return totalDuration
+            if isActive,
+               let currentUsage = usageRecords.last(where: { $0.endTime == nil }){
+                
+                totalDur += Date.now.timeIntervalSince(currentUsage.startTime) / divider
+            }
+            
+            return totalDur
         }
+        
+        return totalDuration
     }
 }
 
