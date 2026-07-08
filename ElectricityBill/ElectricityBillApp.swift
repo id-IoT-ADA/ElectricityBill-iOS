@@ -16,8 +16,6 @@ struct ElectricityBillApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView().environmentObject(homeStore).environmentObject(appState)
-        }.modelContainer(for: Home.self)
-            ContentView().environmentObject(homeStore)
         }.modelContainer(for: [Home.self, EnergyReading.self])
     }
 }
