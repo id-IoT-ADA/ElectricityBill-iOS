@@ -17,20 +17,29 @@ struct ContentView: View {
     var body: some View {
         Group {
             if hasCompletedOnboarding {
-                TabView {
-                    Tab("Home", systemImage: "house.fill"){
-                        MainPageView()
+                if homeStore.isLoaded{
+                    TabView {
+                        Tab("Home", systemImage: "house.fill"){
+                            MainPageView()
+                        }
+                        Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
+                            MonitoringView()
+                        }
+                        Tab("History", systemImage: "triangle") {
+                            EmptyView()
+                        }
                     }
-                    Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                        MonitoringView()
-                    }
-                    Tab("Insight", systemImage: "triangle") {
-                        InsightView()
-                    }
+                    .foregroundStyle(Color(.white))
                 }
-                .foregroundStyle(Color(.white))
+                else{
+                    ProgressView("Loading Homekit...").background(
+                        Image("Background").resizable()
+                            .scaledToFill()
+                            .ignoresSafeArea()
+                    )
+                }
             } else {
-                OnBoardingPage()
+                WelcomePage()
             }
         }
     }

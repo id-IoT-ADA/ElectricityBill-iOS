@@ -11,7 +11,7 @@ import SwiftData
 @Model
 class DeviceUsageRecord {
     var id: UUID
-    var month: Date
+    var month: Int
     var startTime: Date
     var endTime: Date?
     var kWh: Double

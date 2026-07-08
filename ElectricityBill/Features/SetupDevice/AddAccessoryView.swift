@@ -32,6 +32,14 @@ struct AddAccessoryFlow: View {
             homeStore.ensurePrimaryHome()
             homeStore.startSearch()
         }
+        .onChange(of: homeStore.lastPairedAccessoryID) { _, newID in
+            // Menyala HANYA saat user benar-benar mem-pairing device (dari add()),
+            // bukan saat pemuatan awal device lama — jadi tidak menutup prematur.
+            if newID != nil {
+                homeStore.stopSearch()
+                onDone()
+            }
+        }
     }
 }
 

@@ -8,6 +8,7 @@
 import SwiftUI
 import HomeKit
 import SwiftData
+import Foundation
 
 func textStyle(text: String, size: Int = 12, weight: Font.Weight = Font.Weight.regular, color: Color = Color.white) -> Text{
     return Text(text).font(Font.system(size: CGFloat(size), weight: weight)).foregroundColor(color)
@@ -45,11 +46,14 @@ struct LightningBolt: Shape {
 }
 
 struct LightningBoltView: View {
-    @State var usedkWh: Double = 0.0
+    @EnvironmentObject var appState: AppState
+    
+    @State var usedWatt: Double
     
     var body: some View {
+        
         ZStack(alignment: .bottom) {
-            let progress = usedkWh / 120.0
+            let progress = usedWatt / (appState.currentHome?.wattLimit() ?? usedWatt)
             LightningBolt()
                 .fill(.red.opacity(0.02))
             
@@ -63,13 +67,14 @@ struct LightningBoltView: View {
                         .shadow(color: .white, radius: 25)
                 )
             
-            
+            let start = max(0, min(1, progress - 0.1))
+            let middle = max(start, min(1, progress + 0.05))
             LightningBolt()
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: .white, location: progress - 0.1),
-                            .init(color: .clear, location: progress + 0.05),
+                            .init(color: .white, location: start),
+                            .init(color: .clear, location: middle),
                             .init(color: .clear, location: 1.0)
                             
                         ],
@@ -83,7 +88,7 @@ struct LightningBoltView: View {
                         VStack {
                             Spacer(minLength: 0)
                             Rectangle()
-                                .frame(height: geometry.size.height * progress)
+                                .frame(height: geometry.size.height * min(1, max(0, progress)))
                         }
                     }
                 )
@@ -95,10 +100,11 @@ struct LightningBoltView: View {
 }
 
 struct MainPageView: View {
-    //    @State var progress: CGFloat = 0.0
     @EnvironmentObject private var homeStore: HomeStore
-    @State var usedkWh: Double = 0.0
+    @EnvironmentObject private var appState: AppState
+    @State var usedWatt: Double = 0.0
     @State var expandTotalSpend = false
+    @State var totalSpend : Double = 0.0
     @State var showAddHomeSheet : Bool = false
     let preferredOrder = [
         HMAccessoryCategoryTypeLightbulb,
@@ -110,32 +116,24 @@ struct MainPageView: View {
     
     @State private var newHomeName: String = ""
     
-    @State var currentHome: Home?
-    @State var currentHMHome: HMHome?
-    
-    static let Ecapacity: [String] = ["450 VA","900 VA (Subsidi)","900 VA(Non-subsidi)","1300 VA", "2200 VA", "Others"]
-    
-    
-    static let EcapacityDict = [
-        "450 VA": 450,
-        "900 VA (Subsidi)": 900,
-        "900 VA(Non-subsidi)": 900,
-        "1300 VA": 1300,
-        "2200 VA": 2200
-    ]
-    
-    static let priceperKwH = [
-        "450 VA": 415.0,
-        "900 VA (Subsidi)": 605.0,
-        "900 VA(Non-subsidi)": 1352.0,
-        "1300 VA": 1444.70,
-        "2200 VA": 1444.70,
-        "Others" : 1699.53
-    ]
     @State var isExpanded = false
     @State var selection: String? = nil
+    @State var inputLimit: Int? = nil
     @State var res : [String] = ["", ""]
     @State var popUpError: Bool = false
+    
+    @Query(
+        filter: #Predicate<DeviceModel> { device in
+            device.isActive == true
+        }) var activeAccessories: [DeviceModel]
+    
+    func calcUsedWatt() -> Double {
+        var runningWatt: Double = 0.0
+        for acc in activeAccessories{
+            if acc.home == appState.currentHome{ runningWatt += Double(acc.VARating!) * 0.8}
+        }
+        return runningWatt
+    }
     
     private var liveUsageSection: some View {
         VStack(alignment: .center, spacing: 10) {
@@ -145,18 +143,18 @@ struct MainPageView: View {
                     .padding(.leading, 20)
                 Spacer()
             }
-
+            
             ZStack {
                 usageAxisLabels
-                LightningBoltView()
+                LightningBoltView(usedWatt: calcUsedWatt())
             }
-
+            
             HStack(spacing: 0) {
-                let usedkWhRounded = Int(usedkWh.rounded())
-                textStyle(text: "\(usedkWhRounded)", size: 21, weight: .bold)
-                textStyle(text: "/1200 kWh", size: 21)
+                let usedWattRounded = Int(calcUsedWatt().rounded())
+                textStyle(text: "\(usedWattRounded)", size: 21, weight: .bold)
+                textStyle(text: "/\(appState.currentHome?.wattLimit() ?? 0) watt", size: 21)
             }
-
+            
             VStack(spacing: -210) {
                 Image("Squiggle1")
                 Image("Squiggle2")
@@ -169,7 +167,7 @@ struct MainPageView: View {
     private var usageAxisLabels: some View {
         VStack {
             HStack {
-                textStyle(text: "\(currentHome?.VACapacity ?? 1200)", size: 12, color: .white.opacity(0.55))
+                textStyle(text: "\(appState.currentHome?.wattLimit() ?? 0) watt", size: 12, color: .white.opacity(0.55))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2)
                     .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
@@ -179,7 +177,7 @@ struct MainPageView: View {
             Spacer()
             HStack {
                 Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
-                textStyle(text: "0 kWh", size: 12, color: .white.opacity(0.55))
+                textStyle(text: "0 watt", size: 12, color: .white.opacity(0.55))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2)
                     .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
@@ -191,7 +189,7 @@ struct MainPageView: View {
     
     private var totalSpendSection: some View {
         Group {
-            if currentHMHome?.accessories.isEmpty == false {
+            if appState.currentHome?.devices.isEmpty == false {
                 VStack(alignment: .leading) {
                     textStyle(text: "Total Spend", size: 25, weight: .semibold)
                     totalSpendCard
@@ -209,7 +207,7 @@ struct MainPageView: View {
             }
         }
     }
-
+    
     private var totalSpendCard: some View {
         Button {
             withAnimation(.spring(response: 1.0, dampingFraction: 0.8)) {
@@ -220,7 +218,7 @@ struct MainPageView: View {
                 totalSpendHeader
                 if expandTotalSpend {
                     Capsule().fill(Color.white).frame(height: 1)
-                    DetailsView(currentHMHome: currentHMHome!)
+                    DetailsView()
                 }
             }
         }
@@ -229,14 +227,14 @@ struct MainPageView: View {
         .padding(.bottom, expandTotalSpend ? 22 : 12)
         .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
     }
-
+    
     private var totalSpendHeader: some View {
         VStack(spacing: -7) {
             HStack(spacing: 20) {
                 Image("MoneyBag").resizable().frame(width: 52, height: 59)
                 VStack(alignment: .leading) {
                     textStyle(text: "This Month You Spend", size: 18, weight: .semibold)
-                    textStyle(text: "Rp. ", size: 18)
+                    textStyle(text: "\(formatToIDR(amount: totalSpend))", size: 18)
                 }
                 Spacer()
             }
@@ -250,6 +248,27 @@ struct MainPageView: View {
         }
     }
     
+    var isSelectionValid: Bool {
+        if selection == "Others" {
+            return inputLimit != nil && inputLimit! > 0
+        }
+        return selection != nil
+    }
+    
+    private var resolvedLimit: Int? {
+        if selection == "Others" {
+            return inputLimit
+        }
+        guard let selection else { return nil }
+        return SelectElectricity.VAlimit[selection]
+    }
+    
+    private func finishSelectCapacity() {
+        guard let limit = resolvedLimit else { return }
+        appState.currentHome?.VACapacity = limit
+        appState.currentHome?.priceperKwh = OnBoardingPage.priceperKwHDict[selection!]!
+        selection = nil
+    }
     
     var body: some View {
         NavigationStack{
@@ -258,40 +277,63 @@ struct MainPageView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
                 
-                List{
-                    Section{
-                        liveUsageSection
-                    }
-                    .frame(height: 500)
-                    .listSectionSeparator(.hidden)
-                    
-                    Section{totalSpendSection}
-                    
+                if appState.currentHome?.VACapacity == 0 {
                     VStack{
+                        SelectElectricity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
                         
-                    }.frame(height:100)
-                        .listRowBackground(Color.clear)
-                        .listSectionSeparator(.hidden)
-                    
+                        if !isExpanded {
+                            Button {
+                                finishSelectCapacity()
+                            } label: {
+                                Text("Done")
+                                    .foregroundColor(isSelectionValid ? .primary : .secondary)
+                                    .padding(.vertical, 14)
+                                    .padding(.horizontal, 20)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Capsule())
+                                    .opacity(isSelectionValid ? 1.0 : 0.4)
+                            }
+                            .disabled(!isSelectionValid)
+                            .padding()
+                        }
+                    }
                 }
-                .listStyle(.plain)
-                
-                .sheet(isPresented: $showAddHomeSheet){
-                    AddHomeSheet(
+                else{
+                    List{
+                        Section{liveUsageSection}
+                            .frame(height: 500)
+                            .listSectionSeparator(.hidden)
+                        
+                        Section{totalSpendSection}.listSectionSeparator(.hidden)
+                        
+                        VStack{}.frame(height:100)
+                            .listRowBackground(Color.clear)
+                            .listSectionSeparator(.hidden)
+                        
+                    }
+                    .listStyle(.plain)
+                    
+                    .sheet(isPresented: $showAddHomeSheet){
+                        AddHomeSheet(
                             isPresented: $showAddHomeSheet,
                             newHomeName: $newHomeName,
                             selection: $selection,
                             isExpanded: $isExpanded,
                             popUpError: $popUpError,
+                            inputLimit: $inputLimit,
                             res: res,
                             onConfirm: confirmNewHome
                         )
-                }
-                .onAppear{
-                    updateSwiftData()
-                }
-                .onChange(of: homeStore.homes) { _ in
-                    updateSwiftData()
+                    }
+                    .onAppear{
+                        updateSwiftHomeData()
+                        totalSpend = calculateTotalSpend()
+                    }
+                    .onChange(of: homeStore.homes) { _ in
+                        updateSwiftHomeData()
+                        totalSpend = calculateTotalSpend()
+                    }
+                    
                 }
             }
             .toolbar{
@@ -299,6 +341,7 @@ struct MainPageView: View {
                     Button{
                         showAddHomeSheet.toggle()
                         newHomeName = ""
+                        selection = nil
                     }label:{
                         Image(systemName:"plus")
                     }.foregroundStyle(Color.white)
@@ -308,13 +351,12 @@ struct MainPageView: View {
                     Menu{
                         ForEach(homeObjList, id: \.self){ home in
                             Button{
-                                currentHome = home
-                                currentHMHome = homeStore.homes.first(where: { $0.name == currentHome?.homeName })
+                                appState.currentHome = home
                             }label:{
                                 textStyle(text: home.homeName, size: 16)
-                                if currentHome?.homeName == home.homeName{
+                                if appState.currentHome! == home{
                                     textStyle(text: "Current Location", size: 12)
-                                    //                                    Image(systemName: "checkmark")
+                                    Image(systemName: "checkmark")
                                 }
                                 
                             }
@@ -328,22 +370,59 @@ struct MainPageView: View {
         
     }
     
-    func updateSwiftData(){
+    func calculateTotalSpend() -> Double {
+        appState.currentHome!.devices.reduce(0.0) { total, accessory in
+            let currentMonthNumber = Calendar.current.component(.month, from: Date())
+            let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
+            let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
+            let electricityRate = appState.currentHome!.priceperKwh!
+            
+            return total + (hoursUsed * kilowatts * electricityRate)
+        }
+    }
+    
+    func updateSwiftHomeData(){
         let descriptor = FetchDescriptor<Home>()
         do {
             var items = try context.fetch(descriptor)
             let idsInData = Set(items.map(\.id))
-            currentHMHome = nil
+            var primaryHome: HMHome? = nil
+            var updateCurrHome: Bool = false
             
             for home in homeStore.homes {
                 if !idsInData.contains(home.uniqueIdentifier) {
                     print("add: \(home.name)")
                     // Default kwHlimit untuk home yang muncul dari luar app (bukan lewat sheet ini,
                     // misalnya dibuat via Home app) — user bisa edit limitnya nanti.
-                    context.insert(Home(id: home.uniqueIdentifier, VACapacity: 1200, homeName: home.name, priceperKwh: 0))
+                    let homeObj = Home(id: home.uniqueIdentifier, VACapacity: 0, homeName: home.name, priceperKwh: 0)
+                    context.insert(homeObj)
+                    
+                    for acc in home.accessories {
+                        var cat = ""
+                        switch acc.category.categoryType {
+                        case HMAccessoryCategoryTypeLightbulb: cat = "Lamp"
+                        case HMAccessoryCategoryTypeAirConditioner: cat = "AC"
+                        case  HMAccessoryCategoryTypeTelevision: cat = "Television"
+                        default: cat = "Others"
+                        }
+                        
+                        let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: cat, VARating: 5, home: homeObj)
+                        context.insert(accessoryObj)
+                    }
+                    // MOCK DATA
+                    let categories = ["Lamp", "Television", "Others", "AC"]
+                    let VAs = [5, 15, 150, 900]
+                    for i in 0..<7 {
+                        
+                        let accessoryObj = DeviceModel(id: UUID(), name: "\(home.name) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: homeObj)
+                        let currentMonthNumber = Calendar.current.component(.month, from: Date())
+                        let deviceUsageObj = DeviceUsageRecord(month: currentMonthNumber, startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
+                        context.insert(accessoryObj)
+                        context.insert(deviceUsageObj)
+                    }
                 }
                 if home.isPrimary {
-                    currentHMHome = home
+                    primaryHome = home
                 }
             }
             
@@ -352,10 +431,11 @@ struct MainPageView: View {
             let currentHomeKitIDs = Set(homeStore.homes.map(\.uniqueIdentifier))
             for homeObj in items where !currentHomeKitIDs.contains(homeObj.id) {
                 print("delete: \(homeObj.homeName)")
+                if (appState.currentHome == homeObj){ updateCurrHome = true }
                 context.delete(homeObj)
             }
             
-            refreshHomeObjList()
+            refreshHomeObjList(updateCurrHome: updateCurrHome, primaryHome: primaryHome)
         } catch {
             print(error)
         }
@@ -363,13 +443,13 @@ struct MainPageView: View {
     
     /// Refresh murah: cuma re-fetch + sort + publish ke homeObjList.
     /// Aman dipanggil langsung setelah insert home baru, tanpa menunggu homeStore.homes sync.
-    func refreshHomeObjList() {
+    func refreshHomeObjList(updateCurrHome: Bool, primaryHome: HMHome? = nil) {
         let descriptor = FetchDescriptor<Home>(sortBy: [SortDescriptor(\.homeName)])
         do {
             let items = try context.fetch(descriptor)
             homeObjList = items
-            if let currentHMHome {
-                currentHome = items.first(where: { $0.id == currentHMHome.uniqueIdentifier })
+            if updateCurrHome || appState.currentHome == nil {
+                appState.currentHome = homeObjList.first(where: { $0.id == primaryHome?.uniqueIdentifier})
             }
         } catch {
             print(error)
@@ -377,18 +457,20 @@ struct MainPageView: View {
     }
     
     func confirmNewHome() {
-        guard let selectedCapacity = selection else { return }
+        guard let selectedCapacity = selection, let limit = resolvedLimit else { return }
         homeStore.createHome(homeName: newHomeName) { result in
             switch result {
             case .success(let newHome):
                 context.insert(Home(
                     id: newHome.uniqueIdentifier,
-                    VACapacity: MainPageView.EcapacityDict[selectedCapacity]!,
+                    VACapacity: limit,
                     homeName: newHome.name,
-                    priceperKwh: MainPageView.priceperKwH[selectedCapacity]!
+                    priceperKwh: OnBoardingPage.priceperKwHDict[selectedCapacity]!
                 ))
-                refreshHomeObjList()
+                refreshHomeObjList(updateCurrHome: true , primaryHome: newHome)
                 showAddHomeSheet = false
+                homeStore.isLoaded = false
+                homeStore.homeManagerDidUpdateHomes(homeStore.homeManager)
             case .failure(let error):
                 print("Gagal membuat home: \(error.localizedDescription)")
                 popUpError.toggle()
@@ -397,62 +479,167 @@ struct MainPageView: View {
     }
 }
 
-
-
+func formatToIDR(amount: Double) -> String {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.locale = Locale(identifier: "id_ID")
+    formatter.currencySymbol = "Rp "
+    
+    
+    if let finalString = formatter.string(from: NSNumber(value: amount)){
+        return finalString
+    }
+    else{
+        return "Rp "
+    }
+}
 
 struct DetailsView: View{
-    @State var currentHMHome: HMHome
+    @EnvironmentObject var appState: AppState
     
     private let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
     
     private let logoNames = [
         "Lamp" : "lightbulb.min",
         "AC" : "air.conditioner.horizontal",
-        "Television" : "tv"
+        "Television" : "tv",
+        "Others" : "macbook.and.iphone"
     ]
+    
+    @Query var accessories: [DeviceModel]
+    
     var body: some View{
-        ScrollView(.vertical, showsIndicators: true){
-            VStack(spacing: 30){
+        VStack(spacing: 30){
+            
+            var groupedItems: [String: [DeviceModel]] {
+                Dictionary(grouping: appState.currentHome!.devices, by: \.category)
+            }
+            let validCategories = sectionOrder.filter { groupedItems[$0] != nil }
+            let arr = Array(validCategories.enumerated())
+            
+            ForEach(arr, id: \.element) { index, categoryType in
                 
-                var groupedItems: [String: [HMAccessory]] {
-                    Dictionary(grouping: currentHMHome.accessories) { accessory in
-                        switch
-                        accessory.category.categoryType {
-                        case HMAccessoryCategoryTypeLightbulb: return "Lamp"
-                        case HMAccessoryCategoryTypeAirConditioner: return "AC"
-                        case  HMAccessoryCategoryTypeTelevision: return "Television"
-                        default: return "Others"
+                
+                if let accessories = groupedItems[categoryType]{
+                    let currentMonthNumber = Calendar.current.component(.month, from: Date())
+                    let totalPerGroup = accessories.reduce(0) { total, accessory in
+                        let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
+                        let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
+                        let electricityRate = appState.currentHome!.priceperKwh!
+                        
+                        let cost = hoursUsed * kilowatts * electricityRate
+                        
+                        return total + cost
+                    }
+                    
+                    let rupiahFormatted = formatToIDR(amount: totalPerGroup)
+                    
+                    HStack(spacing: 20){
+                        let logoName = logoNames[categoryType]!
+                        Image(systemName: logoName).font(Font.system(size: 35, weight: .thin))
+                        VStack(alignment:.leading){
+                            textStyle(text: categoryType, size: 15, weight: .semibold)
+                            textStyle(text: "\(rupiahFormatted)", size: 15)
                         }
+                        Spacer()
+                    }
+                    
+                    let validCategoriesLen = validCategories.count - 1
+                    if index < validCategoriesLen{
+                        Capsule().fill(Color.white).frame(height: 0.7).padding(.trailing, 22)
                     }
                 }
-                let validCategories = sectionOrder.filter { groupedItems[$0] != nil }
-                let arr = Array(validCategories.enumerated())
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
+            
+        }
+    }
+}
+
+struct SelectElectricityCapacity: View {
+    
+    static let Ecapacity: [String] = ["450 VA","900 VA (Subsidi)","900 VA(Non-subsidi)","1300 VA", "2200 VA", "Others"]
+    
+    
+    static let VAlimit = [
+        "450 VA": 450,
+        "900 VA (Subsidi)": 900,
+        "900 VA(Non-subsidi)": 900,
+        "1300 VA": 1300,
+        "2200 VA": 2200
+    ]
+    
+    @Binding var isExpanded: Bool
+    @Binding var selection: String?
+    @Binding var inputLimit: Int?
+    
+    
+    var selectedlimit: Int? {
+        guard let selection = selection else { return nil }
+        return SelectElectricity.VAlimit[selection]!
+    }
+    
+    var body: some View {
+        Button(action: {
+            withAnimation { isExpanded.toggle() }
+        }) {
+            HStack {
+                Text(selection ?? "Set")
+                    .foregroundColor(selection == nil ? .secondary : .primary)
                 
-                ForEach(arr, id: \.element) { index, categoryType in
-                    
-                    
-                    if let accessories = groupedItems[categoryType]{
-                        
-                        HStack(spacing: 20){
-                            let logoName = logoNames[categoryType]!
-                            Image(systemName: logoName).font(Font.system(size: 35, weight: .thin))
-                            VStack(alignment:.leading){
-                                textStyle(text: categoryType, size: 15, weight: .semibold)
-                                textStyle(text: "Rp. ", size: 15)
-                            }
-                            Spacer()
-                        }
-                        
-                        let validCategoriesLen = validCategories.count - 1
-                        if index < validCategoriesLen{
-                            Capsule().fill(Color.white).frame(height: 0.7).padding(.trailing, 22)
-                        }
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                Spacer()
+                
+                Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
+                    .foregroundColor(.white)
                 
             }
-        }.frame(maxHeight: 200)
+            .padding()
+            .glassEffect(.clear)
+            .cornerRadius(10)
+        }
+        //            .padding(.horizontal,20)
+        
+        if isExpanded {
+            List(SelectElectricity.Ecapacity, id: \.self) { capacity in
+                Button(action: {
+                    selection = capacity
+                    isExpanded = false
+                }) {
+                    HStack {
+                        Text(capacity)
+                            .foregroundColor(capacity == "Others" ? .blue : .primary)
+                        Spacer()
+                        if selection == capacity {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
+                .listRowSeparatorTint(Color.white.opacity(0.12))
+            }
+            .scrollContentBackground(.hidden)
+            .listStyle(.plain)
+            .background(.ultraThinMaterial)
+            .cornerRadius(28)
+            .frame(maxHeight: 300)
+            .overlay(
+                RoundedRectangle(cornerRadius: 28)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            //                .padding(.horizontal, 20)
+        }
+        if selection == "Others"{
+            TextField("Input your VA limit", value: $inputLimit, format: .number)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+                .transition(.opacity)
+        }
+        
+        
+        
     }
 }
 
@@ -462,115 +649,74 @@ struct AddHomeSheet: View {
     @Binding var selection: String?
     @Binding var isExpanded: Bool
     @Binding var popUpError: Bool
+    @Binding var inputLimit: Int?
     var res: [String]
     var onConfirm: () -> Void
-
+    
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 30) {
                 header
-                textStyle(text: "Home Name", size: 16)
-                nameField
-                capacityPicker
+                VStack(alignment: .leading){
+                    textStyle(text: "Home Name", size: 16, weight: .bold)
+                    nameField
+                }
+                VStack(alignment: .leading){
+                    textStyle(text: "Select Electricity Capacity", size: 16, weight: .bold)
+                    SelectElectricityCapacity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
+                }
+                
                 Spacer()
             }
             .padding()
             .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-
+            
             if popUpError {
                 errorOverlay
             }
         }
     }
-
+    
     private var header: some View {
         HStack {
             Button { isPresented = false } label: {
-                Image(systemName: "xmark").foregroundStyle(Color.white)
+                Image(systemName: "xmark")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.gray.opacity(0.2))
+                    .clipShape(Circle())
             }
+            .glassEffect(.clear)
             Spacer()
-            Text("New Home")
+            textStyle(text: "Add New Home", size: 17, weight: .bold)
             Spacer()
             Button(action: onConfirm) {
                 Image(systemName: "checkmark")
-                    .resizable()
-                    .scaledToFit()
-                    .padding()
-                    .frame(width: 40, height: 40)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.blue)
+                    .clipShape(Circle())
             }
             .glassEffect(.clear)
         }
     }
-
+    
     private var nameField: some View {
         TextField("Home Name", text: $newHomeName)
-            .padding()
-            .background(Color.white)
-            .foregroundStyle(Color.black)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray, lineWidth: 1.0))
+            .padding(12)
+            .background(Color.gray.opacity(0.2))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-
-    private var capacityPicker: some View {
-        VStack(spacing: 20) {
-            Text("Select Electricity Capacity").font(.title3).bold()
-
-            Button {
-                withAnimation { isExpanded.toggle() }
-            } label: {
-                HStack {
-                    Text(selection ?? "Electricity Capacity")
-                        .foregroundColor(selection == nil ? .secondary : .primary)
-                    Spacer()
-                    Image(systemName: "chevron.right").foregroundColor(.white)
-                }
-                .padding()
-                .glassEffect(.clear)
-                .cornerRadius(10)
-            }
-            .padding(.horizontal, 20)
-
-            if isExpanded {
-                capacityList
-            }
-        }
-    }
-
-    private var capacityList: some View {
-        List(MainPageView.Ecapacity, id: \.self) { item in
-            Button {
-                withAnimation {
-                    selection = item
-                    isExpanded = false
-                }
-            } label: {
-                HStack {
-                    Text(item).foregroundColor(.primary)
-                    Spacer()
-                    if selection == item {
-                        Image(systemName: "checkmark").foregroundColor(.blue)
-                    }
-                }
-            }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
-            .listRowSeparatorTint(Color.white.opacity(0.12))
-        }
-        .scrollContentBackground(.hidden)
-        .listStyle(.plain)
-        .frame(maxHeight: 290)
-        .background(.ultraThinMaterial)
-        .cornerRadius(28)
-        .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.white.opacity(0.08), lineWidth: 1))
-        .padding(.horizontal, 20)
-    }
-
+    
     private var errorOverlay: some View {
         VStack {
             Text(res[1])
             Button("Close") { popUpError.toggle() }
                 .padding()
                 .background(Color.blue)
-        }
+        }.padding()
     }
 }
 

@@ -17,7 +17,7 @@ private let hkLog = Logger(subsystem: "ElectricityBill", category: "HomeKit")
 /// opening Apple's Home app. The accessory still lives in the shared HomeKit
 /// database, and iOS performs the actual secure pairing (setup code prompt).
 class HomeStore: NSObject, ObservableObject {
-    private let homeManager = HMHomeManager()
+    let homeManager = HMHomeManager()
     private let browser = HMAccessoryBrowser()
 
     @Published var homes: [HMHome] = []
@@ -29,6 +29,11 @@ class HomeStore: NSObject, ObservableObject {
     @Published var pairedAccessories: [HMAccessory] = []
     @Published var isSearching = false
     @Published var statusMessage: String?
+    @Published var isLoaded: Bool = false
+    /// Set the moment an accessory finishes pairing via `add(_:)` (a genuine
+    /// user action) — not on the initial load of already-paired devices.
+    /// Views observe this to auto-dismiss the "Add Accessory" flow.
+    @Published var lastPairedAccessoryID: UUID?
 
     override init() {
         super.init()
@@ -101,6 +106,7 @@ class HomeStore: NSObject, ObservableObject {
                 self.observe(accessory)
                 self.foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
                 self.refreshPaired()
+                self.lastPairedAccessoryID = accessory.uniqueIdentifier
                 self.statusMessage = "Added \(accessory.name)"
             }
         }
@@ -152,6 +158,7 @@ extension HomeStore: HMHomeManagerDelegate {
             }
             self.primaryHome = manager.primaryHome ?? manager.homes.first
             self.refreshPaired()
+            self.isLoaded = true
         }
     }
 }
