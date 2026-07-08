@@ -14,22 +14,70 @@ class DeviceUsageRecord {
     var month: Int
     var startTime: Date
     var endTime: Date?
-//    var kWh: Double
+    var kWh: Double
     var device: DeviceModel?
 
     init(
         id: UUID = UUID(),
-        month: Int,
+        month: Date,
         startTime: Date,
-        endTime: Date? = nil,
-//        kWh: Double,
+        endTime: Date?,
+        kWh: Double,
         device: DeviceModel? = nil
     ) {
         self.id = id
         self.month = month
         self.startTime = startTime
         self.endTime = endTime
-//        self.kWh = kWh
+        self.kWh = kWh
         self.device = device
     }
+    
 }
+
+extension DeviceUsageRecord {
+    var durationInMinutes: Double {
+        guard let endTime else { return 0 }
+        return endTime.timeIntervalSince(startTime) / 60
+    }
+    
+    private func estimatedKWh(va: DeviceModel, durationInMinutes: Double) -> Double {
+        guard let va = va.VARating, va > 0 else { return 0 }
+        let hours = durationInMinutes / 60
+        return (Double(va) * hours) / 1000
+    }
+}
+
+extension Array where Element == DeviceUsageRecord {
+    func totalDurationMinutes(forMonth month: Date, calendar: Calendar = .current) -> Int {
+        Int(self
+            .filter { calendar.isDate($0.month, equalTo: month, toGranularity: .month) }
+            .reduce(0.0) { $0 + $1.durationInMinutes })
+    }
+
+    func formattedDuration(forMonth month: Date, calendar: Calendar = .current) -> String {
+        let totalMinutes = totalDurationMinutes(forMonth: month, calendar: calendar)
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+    }
+}
+
+struct monthlyUsageSummary {
+    let currentmonthkwh: Double
+    let previousmonthkwh: Double
+    let currentmonthSpend: Double
+    let previousmonthSpend: Double
+
+    var percentChange: Double {
+        guard previousmonthkwh > 0 else { return 0 }
+        return ((previousmonthkwh - currentmonthkwh) / previousmonthkwh) * 100
+    }
+    
+    var rupiahdiff: Double{
+        guard previousmonthSpend > 0 else {return 0}
+        return (currentmonthSpend - previousmonthSpend)
+    }
+}
+
+
