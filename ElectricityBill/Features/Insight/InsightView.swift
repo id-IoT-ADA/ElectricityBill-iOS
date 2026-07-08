@@ -44,7 +44,7 @@ struct InsightView: View {
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .frame(height: 150)
                     
-                    PageDots(count: viewModel.pages.count, current: currentPage)
+//                    PageDots(count: viewModel.pages.count, current: currentPage)
                     
                     mostUsedSection
                 }
