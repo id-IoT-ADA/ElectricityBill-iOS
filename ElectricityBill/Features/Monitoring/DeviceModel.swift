@@ -12,7 +12,7 @@ import SwiftData
 class DeviceModel {
     var id: UUID
     var name: String
-    var icon: String
+    var category: String
     var VARating: Int?
     var isActive: Bool
     var createdAt: Date
@@ -27,8 +27,8 @@ class DeviceModel {
     init(
         id: UUID,
         name: String,
-        icon: String,
-        VARating: Int? = nil,
+        category: String,
+        VARating: Int? = 0,
         isActive: Bool = true,
         createdAt: Date = .now,
         updatedAt: Date? = nil,
@@ -37,7 +37,7 @@ class DeviceModel {
     ) {
         self.id = id
         self.name = name
-        self.icon = icon
+        self.category = category
         self.VARating = VARating
         self.isActive = isActive
         self.createdAt = createdAt
@@ -46,10 +46,29 @@ class DeviceModel {
         self.home = home
     }
     
-    var totalDurationMinutes: Int {
-        usageRecords.reduce(0) { total, record in
-            guard let end = record.endTime else { return total }
-            return total + (end - record.startTime)
+    func getTotalDuration(month: Int?, unit: Unit) -> Double{
+        
+        let divider = unit == .hr ? 3600.0 : 60.0
+        var totalDuration: Double {
+            var totalDur = usageRecords.reduce(0) { total, record in
+                guard month != nil, record.month == month, let endTime = record.endTime else { return total }
+                return total + (endTime.timeIntervalSince(record.startTime) / divider)
+            }
+            
+            if isActive,
+               let currentUsage = usageRecords.last(where: { $0.endTime == nil }){
+                
+                totalDur += Date.now.timeIntervalSince(currentUsage.startTime) / divider
+            }
+            
+            return totalDur
         }
+        
+        return totalDuration
     }
+}
+
+enum Unit: String{
+    case m
+    case hr
 }

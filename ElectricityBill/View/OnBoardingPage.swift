@@ -17,8 +17,18 @@ struct OnBoardingPage: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @Environment(\.modelContext) private var context
     @State private var selectedHome: HMHome?
+    @State private var priceperKwH: Double = 0.0
+    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var homelist : HomeStore
     
-    
+    static let priceperKwHDict = [
+        "450 VA": 415.0,
+        "900 VA (Subsidi)": 605.0,
+        "900 VA(Non-subsidi)": 1352.0,
+        "1300 VA": 1444.70,
+        "2200 VA": 1444.70,
+        "Others" : 1699.53
+    ]
     
     init(){
         UIPageControl.appearance().currentPageIndicatorTintColor = .white
@@ -81,7 +91,34 @@ struct OnBoardingPage: View {
     }
     private func finishOnboarding() {
         guard let selectedHome, let limit = resolvedLimit else { return }
-        context.insert(Home(id: selectedHome.uniqueIdentifier, VACapacity: limit, homeName: selectedHome.name, priceperKwh: 1444.0))
+        priceperKwH = OnBoardingPage.priceperKwHDict[selection!]!
+        let homeObj = Home(id: selectedHome.uniqueIdentifier, VACapacity: limit, homeName: selectedHome.name, priceperKwh: priceperKwH)
+        context.insert(homeObj)
+        appState.currentHome = homeObj
+        let currentHMHome = homelist.homes.first(where: { $0.uniqueIdentifier == appState.currentHome?.id })
+        for acc in currentHMHome!.accessories {
+            var cat = ""
+            switch acc.category.categoryType {
+                case HMAccessoryCategoryTypeLightbulb: cat = "Lamp"
+                case HMAccessoryCategoryTypeAirConditioner: cat = "AC"
+                case  HMAccessoryCategoryTypeTelevision: cat = "Television"
+                default: cat = "Others"
+            }
+            
+            let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: acc.name, category: cat, VARating: 5, home: appState.currentHome!)
+            context.insert(accessoryObj)
+        }
+        
+        // MOCK DATA
+        let categories = ["Lamp", "Television", "Others", "AC"]
+        let VAs = [5, 15, 150, 900]
+        for i in 0..<7 {
+            let accessoryObj = DeviceModel(id: UUID(), name: "\(appState.currentHome!.homeName) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: appState.currentHome!)
+            let currentMonthNumber = Calendar.current.component(.month, from: Date())
+            let deviceUsageObj = DeviceUsageRecord(month: currentMonthNumber, startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
+            context.insert(accessoryObj)
+            context.insert(deviceUsageObj)
+        }
         hasCompletedOnboarding = true
         print("Home: \(selectedHome.name) with VA Limit: \(limit)")
     }
@@ -90,7 +127,7 @@ struct OnBoardingPage: View {
 
 
 struct getHome: View {
-    @StateObject private var homelist = HomeStore()
+    @EnvironmentObject private var homelist : HomeStore
     @Binding var selectedHome: HMHome?
     
     var body: some View {
