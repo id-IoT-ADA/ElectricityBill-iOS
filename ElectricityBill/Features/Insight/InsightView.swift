@@ -65,8 +65,14 @@ struct InsightView: View {
         VStack(alignment: .leading, spacing: 14) {
             textStyle(text: "Most Used", size: 22, weight: .semibold)
             
-            ForEach(accessories) {  device in
-                if appState.currentHome == device.home {
+            ForEach(
+                accessories
+                    .filter{$0.home == appState.currentHome}
+                    .sorted{
+                        $0.getTotalDuration(month: Date(), unit: .m) > $1.getTotalDuration(month: Date(), unit: .m)
+                    }
+            ) {  device in
+               
                     HStack(spacing: 14) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 10)
@@ -87,7 +93,6 @@ struct InsightView: View {
 //                    if index < viewModel.mostUsedDevices.count - 1 {
 //                        Divider().overlay(Color.white.opacity(0.15))
 //                    }
-                }
             }
         }
         .padding(.horizontal, 16)
