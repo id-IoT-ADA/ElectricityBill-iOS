@@ -278,6 +278,7 @@ struct MainPageView: View {
                     .ignoresSafeArea()
                 
                 if appState.currentHome?.VACapacity == 0 {
+                    
                     VStack{
                         SelectElectricity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
                         
@@ -367,7 +368,6 @@ struct MainPageView: View {
                 }
             }
         }
-        
     }
     
     func calculateTotalSpend() -> Double {

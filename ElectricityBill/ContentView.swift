@@ -12,6 +12,7 @@ import HomeKit
 struct ContentView: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var homeStore: HomeStore
+    @EnvironmentObject private var appState: AppState
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
@@ -20,7 +21,10 @@ struct ContentView: View {
                 if homeStore.isLoaded{
                     TabView {
                         Tab("Home", systemImage: "house.fill"){
-                            MainPageView()
+                            MainPageView().toolbar(
+                                appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                for: .tabBar
+                            )
                         }
                         Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
                             MonitoringView()
