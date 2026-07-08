@@ -371,14 +371,7 @@ struct MainPageView: View {
     }
     
     func calculateTotalSpend() -> Double {
-        appState.currentHome!.devices.reduce(0.0) { total, accessory in
-            
-            let hoursUsed = accessory.getTotalDuration(month: Date(), unit: .hr)
-            let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
-            let electricityRate = appState.currentHome!.priceperKwh!
-            
-            return total + (hoursUsed * kilowatts * electricityRate)
-        }
+        appState.currentHome!.calculateTotalKwH(month: Date()) * appState.currentHome!.priceperKwh!
     }
     
     func updateSwiftHomeData(){

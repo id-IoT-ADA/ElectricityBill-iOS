@@ -29,26 +29,24 @@ class Home{
         return Double(VACapacity ?? 0) * 0.8
     }
     
+    func calculateTotalKwH(month: Date) -> Double {
+        devices.reduce(0.0) { total, accessory in
+            
+            let hoursUsed = accessory.getTotalDuration(month: Date(), unit: .hr)
+            let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
+            
+            return total + (hoursUsed * kilowatts)
+        }
+    }
     
     func getMonthlySummary() -> monthlyUsageSummary {
         let calendar = Calendar.current
         let now = Date()
         let lastMonth = calendar.date(byAdding: .month, value: -1, to: now) ?? now
         
-        func totalKwh(for month: Date) -> Double {
-            var totalKwh = 0.0
-            for device in devices{
-                let deviceHrDuration = device.getTotalDuration(month: month, unit: .hr)
-                let deviceTotalKwH = Double(device.VARating!) * 0.8 * deviceHrDuration / 1000
-                totalKwh += deviceTotalKwH
-            }
-            
-            return totalKwh
-        }
-        
-        let currentKwh = totalKwh(for: now)
-        let previousKwh = totalKwh(for: lastMonth)
-//
+        let currentKwh = calculateTotalKwH(month: now)
+        let previousKwh = calculateTotalKwH(month: lastMonth)
+
         return monthlyUsageSummary(
             currentmonthkwh: currentKwh,
             previousmonthkwh: previousKwh,
