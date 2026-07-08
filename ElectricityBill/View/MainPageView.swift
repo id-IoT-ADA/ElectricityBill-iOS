@@ -47,7 +47,7 @@ struct LightningBolt: Shape {
 
 struct LightningBoltView: View {
     @EnvironmentObject var appState: AppState
-
+    
     @State var usedWatt: Double
     
     var body: some View {
@@ -143,18 +143,18 @@ struct MainPageView: View {
                     .padding(.leading, 20)
                 Spacer()
             }
-
+            
             ZStack {
                 usageAxisLabels
                 LightningBoltView(usedWatt: calcUsedWatt())
             }
-
+            
             HStack(spacing: 0) {
                 let usedWattRounded = Int(calcUsedWatt().rounded())
                 textStyle(text: "\(usedWattRounded)", size: 21, weight: .bold)
                 textStyle(text: "/\(appState.currentHome?.wattLimit() ?? 0) watt", size: 21)
             }
-
+            
             VStack(spacing: -210) {
                 Image("Squiggle1")
                 Image("Squiggle2")
@@ -207,7 +207,7 @@ struct MainPageView: View {
             }
         }
     }
-
+    
     private var totalSpendCard: some View {
         Button {
             withAnimation(.spring(response: 1.0, dampingFraction: 0.8)) {
@@ -227,7 +227,7 @@ struct MainPageView: View {
         .padding(.bottom, expandTotalSpend ? 22 : 12)
         .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
     }
-
+    
     private var totalSpendHeader: some View {
         VStack(spacing: -7) {
             HStack(spacing: 20) {
@@ -356,7 +356,7 @@ struct MainPageView: View {
                                 textStyle(text: home.homeName, size: 16)
                                 if appState.currentHome! == home{
                                     textStyle(text: "Current Location", size: 12)
-                                                                        Image(systemName: "checkmark")
+                                    Image(systemName: "checkmark")
                                 }
                                 
                             }
@@ -376,7 +376,7 @@ struct MainPageView: View {
             let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
             let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
             let electricityRate = appState.currentHome!.priceperKwh!
-
+            
             return total + (hoursUsed * kilowatts * electricityRate)
         }
     }
@@ -388,7 +388,7 @@ struct MainPageView: View {
             let idsInData = Set(items.map(\.id))
             var primaryHome: HMHome? = nil
             var updateCurrHome: Bool = false
-
+            
             for home in homeStore.homes {
                 if !idsInData.contains(home.uniqueIdentifier) {
                     print("add: \(home.name)")
@@ -400,10 +400,10 @@ struct MainPageView: View {
                     for acc in home.accessories {
                         var cat = ""
                         switch acc.category.categoryType {
-                            case HMAccessoryCategoryTypeLightbulb: cat = "Lamp"
-                            case HMAccessoryCategoryTypeAirConditioner: cat = "AC"
-                            case  HMAccessoryCategoryTypeTelevision: cat = "Television"
-                            default: cat = "Others"
+                        case HMAccessoryCategoryTypeLightbulb: cat = "Lamp"
+                        case HMAccessoryCategoryTypeAirConditioner: cat = "AC"
+                        case  HMAccessoryCategoryTypeTelevision: cat = "Television"
+                        default: cat = "Others"
                         }
                         
                         let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: cat, VARating: 5, home: homeObj)
@@ -484,8 +484,8 @@ func formatToIDR(amount: Double) -> String {
     formatter.numberStyle = .currency
     formatter.locale = Locale(identifier: "id_ID")
     formatter.currencySymbol = "Rp "
-
-
+    
+    
     if let finalString = formatter.string(from: NSNumber(value: amount)){
         return finalString
     }
@@ -509,52 +509,50 @@ struct DetailsView: View{
     @Query var accessories: [DeviceModel]
     
     var body: some View{
-        ScrollView(.vertical, showsIndicators: true){
-            VStack(spacing: 30){
+        VStack(spacing: 30){
+            
+            var groupedItems: [String: [DeviceModel]] {
+                Dictionary(grouping: appState.currentHome!.devices, by: \.category)
+            }
+            let validCategories = sectionOrder.filter { groupedItems[$0] != nil }
+            let arr = Array(validCategories.enumerated())
+            
+            ForEach(arr, id: \.element) { index, categoryType in
                 
-                var groupedItems: [String: [DeviceModel]] {
-                    Dictionary(grouping: appState.currentHome!.devices, by: \.category)
-                }
-                let validCategories = sectionOrder.filter { groupedItems[$0] != nil }
-                let arr = Array(validCategories.enumerated())
                 
-                ForEach(arr, id: \.element) { index, categoryType in
+                if let accessories = groupedItems[categoryType]{
+                    let currentMonthNumber = Calendar.current.component(.month, from: Date())
+                    let totalPerGroup = accessories.reduce(0) { total, accessory in
+                        let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
+                        let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
+                        let electricityRate = appState.currentHome!.priceperKwh!
+                        
+                        let cost = hoursUsed * kilowatts * electricityRate
+                        
+                        return total + cost
+                    }
                     
+                    let rupiahFormatted = formatToIDR(amount: totalPerGroup)
                     
-                    if let accessories = groupedItems[categoryType]{
-                        let currentMonthNumber = Calendar.current.component(.month, from: Date())
-                        let totalPerGroup = accessories.reduce(0) { total, accessory in
-                            let hoursUsed = accessory.getTotalDuration(month: currentMonthNumber, unit: .hr)
-                            let kilowatts = Double(accessory.VARating!) * 0.8 / 1000.0
-                            let electricityRate = appState.currentHome!.priceperKwh!
-
-                            let cost = hoursUsed * kilowatts * electricityRate
-
-                            return total + cost
+                    HStack(spacing: 20){
+                        let logoName = logoNames[categoryType]!
+                        Image(systemName: logoName).font(Font.system(size: 35, weight: .thin))
+                        VStack(alignment:.leading){
+                            textStyle(text: categoryType, size: 15, weight: .semibold)
+                            textStyle(text: "\(rupiahFormatted)", size: 15)
                         }
-                        
-                        let rupiahFormatted = formatToIDR(amount: totalPerGroup)
-                        
-                        HStack(spacing: 20){
-                            let logoName = logoNames[categoryType]!
-                            Image(systemName: logoName).font(Font.system(size: 35, weight: .thin))
-                            VStack(alignment:.leading){
-                                textStyle(text: categoryType, size: 15, weight: .semibold)
-                                textStyle(text: "\(rupiahFormatted)", size: 15)
-                            }
-                            Spacer()
-                        }
-                        
-                        let validCategoriesLen = validCategories.count - 1
-                        if index < validCategoriesLen{
-                            Capsule().fill(Color.white).frame(height: 0.7).padding(.trailing, 22)
-                        }
+                        Spacer()
+                    }
+                    
+                    let validCategoriesLen = validCategories.count - 1
+                    if index < validCategoriesLen{
+                        Capsule().fill(Color.white).frame(height: 0.7).padding(.trailing, 22)
                     }
                 }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-                
             }
-        }.frame(maxHeight: 200)
+            .transition(.opacity.combined(with: .move(edge: .top)))
+            
+        }
     }
 }
 
@@ -582,65 +580,65 @@ struct SelectElectricityCapacity: View {
     }
     
     var body: some View {
-            Button(action: {
-                withAnimation { isExpanded.toggle() }
-            }) {
-                HStack {
-                    Text(selection ?? "Set")
-                        .foregroundColor(selection == nil ? .secondary : .primary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
-                        .foregroundColor(.white)
-                    
-                }
-                .padding()
-                .glassEffect(.clear)
-                .cornerRadius(10)
+        Button(action: {
+            withAnimation { isExpanded.toggle() }
+        }) {
+            HStack {
+                Text(selection ?? "Set")
+                    .foregroundColor(selection == nil ? .secondary : .primary)
+                
+                Spacer()
+                
+                Image(systemName: isExpanded ? "chevron.right" : "chevron.right")
+                    .foregroundColor(.white)
+                
             }
-//            .padding(.horizontal,20)
-            
-            if isExpanded {
-                List(SelectElectricity.Ecapacity, id: \.self) { capacity in
-                    Button(action: {
-                        selection = capacity
-                        isExpanded = false
-                    }) {
-                        HStack {
-                            Text(capacity)
-                                .foregroundColor(capacity == "Others" ? .blue : .primary)
-                            Spacer()
-                            if selection == capacity {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.white)
-                            }
+            .padding()
+            .glassEffect(.clear)
+            .cornerRadius(10)
+        }
+        //            .padding(.horizontal,20)
+        
+        if isExpanded {
+            List(SelectElectricity.Ecapacity, id: \.self) { capacity in
+                Button(action: {
+                    selection = capacity
+                    isExpanded = false
+                }) {
+                    HStack {
+                        Text(capacity)
+                            .foregroundColor(capacity == "Others" ? .blue : .primary)
+                        Spacer()
+                        if selection == capacity {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.white)
                         }
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
-                    .listRowSeparatorTint(Color.white.opacity(0.12))
                 }
-                .scrollContentBackground(.hidden)
-                .listStyle(.plain)
-                .background(.ultraThinMaterial)
-                .cornerRadius(28)
-                .frame(maxHeight: 300)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-//                .padding(.horizontal, 20)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
+                .listRowSeparatorTint(Color.white.opacity(0.12))
             }
-            if selection == "Others"{
-                TextField("Input your VA limit", value: $inputLimit, format: .number)
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(.roundedBorder)
-                    .padding()
-                    .transition(.opacity)
-            }
-            
-            
+            .scrollContentBackground(.hidden)
+            .listStyle(.plain)
+            .background(.ultraThinMaterial)
+            .cornerRadius(28)
+            .frame(maxHeight: 300)
+            .overlay(
+                RoundedRectangle(cornerRadius: 28)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            //                .padding(.horizontal, 20)
+        }
+        if selection == "Others"{
+            TextField("Input your VA limit", value: $inputLimit, format: .number)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+                .transition(.opacity)
+        }
+        
+        
         
     }
 }
@@ -654,7 +652,7 @@ struct AddHomeSheet: View {
     @Binding var inputLimit: Int?
     var res: [String]
     var onConfirm: () -> Void
-
+    
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 30) {
@@ -672,13 +670,13 @@ struct AddHomeSheet: View {
             }
             .padding()
             .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-
+            
             if popUpError {
                 errorOverlay
             }
         }
     }
-
+    
     private var header: some View {
         HStack {
             Button { isPresented = false } label: {
@@ -704,21 +702,21 @@ struct AddHomeSheet: View {
             .glassEffect(.clear)
         }
     }
-
+    
     private var nameField: some View {
         TextField("Home Name", text: $newHomeName)
             .padding(12)
-                .background(Color.gray.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+            .background(Color.gray.opacity(0.2))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-
+    
     private var errorOverlay: some View {
         VStack {
             Text(res[1])
             Button("Close") { popUpError.toggle() }
                 .padding()
                 .background(Color.blue)
-        }
+        }.padding()
     }
 }
 
