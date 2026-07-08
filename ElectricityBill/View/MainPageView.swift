@@ -416,7 +416,7 @@ struct MainPageView: View {
                         
                         let accessoryObj = DeviceModel(id: UUID(), name: "\(home.name) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: homeObj)
                         
-                        let deviceUsageObj = DeviceUsageRecord(month: Date(), startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
+                        let deviceUsageObj = DeviceUsageRecord(startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
                         context.insert(accessoryObj)
                         context.insert(deviceUsageObj)
                     }

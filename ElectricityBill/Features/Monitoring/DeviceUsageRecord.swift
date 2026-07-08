@@ -11,7 +11,7 @@ import SwiftData
 @Model
 class DeviceUsageRecord {
     var id: UUID
-    var month: Date
+//    var month: Date
     var startTime: Date
     var endTime: Date?
     var kWh: Double?
@@ -19,14 +19,14 @@ class DeviceUsageRecord {
 
     init(
         id: UUID = UUID(),
-        month: Date,
+//        month: Date,
         startTime: Date,
         endTime: Date? = nil,
         kWh: Double? = 0.0,
         device: DeviceModel? = nil
     ) {
         self.id = id
-        self.month = month
+//        self.month = month
         self.startTime = startTime
         self.endTime = endTime
         self.kWh = kWh
@@ -51,7 +51,7 @@ extension DeviceUsageRecord {
 extension Array where Element == DeviceUsageRecord {
     func totalDurationMinutes(forMonth month: Date, calendar: Calendar = .current) -> Int {
         Int(self
-            .filter { calendar.isDate($0.month, equalTo: month, toGranularity: .month) }
+            .filter { calendar.isDate($0.startTime, equalTo: month, toGranularity: .month) }
             .reduce(0.0) { $0 + $1.durationInMinutes })
     }
 

@@ -22,7 +22,7 @@ enum MockEnergyData {
             comps.hour = hour
             let start = calendar.date(from: comps) ?? monthStart
             let end = calendar.date(byAdding: .minute, value: durationMinutes, to: start) ?? start
-            return DeviceUsageRecord(month: monthStart, startTime: start, endTime: end, kWh: kWh)
+            return DeviceUsageRecord(startTime: start, endTime: end, kWh: kWh)
         }
         
         let ac1 = DeviceModel(id: UUID(), name: "AC Kamar Keira", category: "AC", VARating: 900)
@@ -59,7 +59,7 @@ enum MockEnergyData {
         func totalKwh(for month: Date) -> Double {
             devices
                 .flatMap(\.usageRecords)
-                .filter { calendar.isDate($0.month, equalTo: month, toGranularity: .month) }
+                .filter { calendar.isDate($0.startTime, equalTo: month, toGranularity: .month) }
                 .reduce(0) { $0 + $1.kWh! }
         }
         

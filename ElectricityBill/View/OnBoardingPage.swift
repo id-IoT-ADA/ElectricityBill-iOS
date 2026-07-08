@@ -114,7 +114,7 @@ struct OnBoardingPage: View {
         let VAs = [5, 15, 150, 900]
         for i in 0..<7 {
             let accessoryObj = DeviceModel(id: UUID(), name: "\(appState.currentHome!.homeName) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: appState.currentHome!)
-            let deviceUsageObj = DeviceUsageRecord(month: Date(), startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
+            let deviceUsageObj = DeviceUsageRecord( startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
             context.insert(accessoryObj)
             context.insert(deviceUsageObj)
         }

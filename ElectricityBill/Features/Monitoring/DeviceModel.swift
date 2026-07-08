@@ -74,7 +74,7 @@ extension DeviceModel{
         ) ?? date
         
         let newRecord = DeviceUsageRecord(
-            month: monthDate,
+//            month: monthDate,
             startTime: date,
             endTime: nil,
             kWh: 0,
@@ -103,7 +103,7 @@ extension DeviceModel{
         let divider = unit == .hr ? 3600.0 : 60.0
         var totalDuration: Double {
             var totalDur = usageRecords.reduce(0) { total, record in
-                guard month != nil, record.month == month, let endTime = record.endTime else { return total }
+                guard month != nil, Calendar.current.component(.month, from: record.startTime) == Calendar.current.component(.month, from: month!), Calendar.current.component(.year, from: record.startTime) == Calendar.current.component(.year, from: month!), let endTime = record.endTime else { return total }
                 return total + (endTime.timeIntervalSince(record.startTime) / divider)
             }
             
