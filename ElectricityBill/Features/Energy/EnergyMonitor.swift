@@ -16,9 +16,11 @@ class EnergyMonitor : NSObject, ObservableObject {
     @Published var current: Double = 0
     @Published var watt: Double = 0
     @Published var kWh: Double = 0
-    
+    @Published var isOn: Bool = false
+
     private let accessory: HMAccessory
     private let context: ModelContext
+    private var powerChar: HMCharacteristic?
     private var lastPersist = Date.distantPast
     private let persistInterval: TimeInterval = 30
     
@@ -38,11 +40,21 @@ class EnergyMonitor : NSObject, ObservableObject {
     
     private func subscribe() {
         accessory.delegate = self
-        
+
         for service in accessory.services {
             for c in service.characteristics {
-                guard energyUUIDs.contains(c.characteristicType.uppercased()) else { continue }
-                
+                let type = c.characteristicType.uppercased()
+
+                // The On/off switch (lamp control) — keep a reference to write to it.
+                if type == HMCharacteristicTypePowerState.uppercased() {
+                    powerChar = c
+                    c.enableNotification(true) { _ in }
+                    c.readValue { _ in }
+                    continue
+                }
+
+                // Energy readings.
+                guard energyUUIDs.contains(type) else { continue }
                 c.enableNotification(true) { error in
                     if let error {
                         print("notify gagal:", error.localizedDescription)
@@ -50,6 +62,14 @@ class EnergyMonitor : NSObject, ObservableObject {
                 }
                 c.readValue{ _ in }
             }
+        }
+    }
+
+    func setOn(_ on: Bool) {
+        guard let powerChar else { return }
+        isOn = on
+        powerChar.writeValue(on) { error in
+            if let error { print("toggle gagal:", error.localizedDescription) }
         }
     }
     
@@ -71,9 +91,17 @@ class EnergyMonitor : NSObject, ObservableObject {
 
 extension EnergyMonitor: HMAccessoryDelegate {
     func accessory(_ accessory: HMAccessory, service: HMService, didUpdateValueFor characteristic: HMCharacteristic) {
+        let type = characteristic.characteristicType.uppercased()
+
+        // Lamp on/off state.
+        if type == HMCharacteristicTypePowerState.uppercased() {
+            isOn = (characteristic.value as? Bool) ?? false
+            return
+        }
+
+        // Energy readings.
         let value = (characteristic.value as? NSNumber)?.doubleValue ?? 0
-        
-        switch characteristic.characteristicType.uppercased() {
+        switch type {
             case EveCharacteristic.voltage: voltage = value
             case EveCharacteristic.current: current = value
             case EveCharacteristic.watt: watt = value

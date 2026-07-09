@@ -115,7 +115,12 @@ class HomeStore: NSObject, ObservableObject {
     // MARK: - Control (Lightbulb power state)
 
     func powerCharacteristic(for accessory: HMAccessory) -> HMCharacteristic? {
-        for service in accessory.services where service.serviceType == HMServiceTypeLightbulb {
+        // Both Lightbulb and Outlet expose the same PowerState characteristic.
+        // The power meter is an Outlet, so it must be included or its lamp
+        // can't be toggled from the app.
+        for service in accessory.services
+        where service.serviceType == HMServiceTypeLightbulb
+           || service.serviceType == HMServiceTypeOutlet {
             for c in service.characteristics where c.characteristicType == HMCharacteristicTypePowerState {
                 return c
             }
