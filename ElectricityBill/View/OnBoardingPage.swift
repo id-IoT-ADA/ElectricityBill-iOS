@@ -158,11 +158,21 @@ struct getHome: View {
                                     }
                                 }
                                 .foregroundStyle(Color.white)
+//                                .glassEffect()
                             }
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
+                            .listRowSeparatorTint(Color.white.opacity(0.12))
                         }
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20))
-                        .listRowSeparatorTint(Color.white.opacity(0.12))
+                        .listStyle(.plain)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(28)
+                        .frame(maxHeight: 300)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 28)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 20)
                     }
                 }
             }
@@ -255,9 +265,10 @@ struct SelectElectricity: View {
             if selection == "Others"{
                 TextField("Input your VA limit", value: $inputLimit, format: .number)
                     .keyboardType(.numberPad)
-                    .textFieldStyle(.roundedBorder)
                     .padding()
-                    .transition(.opacity)
+                    .glassEffect(.clear)
+                    .cornerRadius(10)
+                    .padding(.horizontal,20)
             }
             
             
