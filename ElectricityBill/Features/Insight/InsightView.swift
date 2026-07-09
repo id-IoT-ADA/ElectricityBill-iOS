@@ -17,7 +17,6 @@ struct InsightView: View {
     @EnvironmentObject var appState: AppState
     @Query var accessories: [DeviceModel]
     
-    
     var body: some View {
         ZStack {
             Image("Background")
@@ -47,9 +46,22 @@ struct InsightView: View {
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .frame(height: 150)
                     
-//                    PageDots(count: viewModel.pages.count, current: currentPage)
+                    VStack{
+                        Text("Most Used in hours")
+                            .padding()
+                        mostUsedHrs
+                        Spacer()
+                        Text("Most Used in Watt")
+                            .padding()
+                        mostUsedWatt
+                        Text("Most Spending")
+                            .padding()
+                        mostSpending
+                    }
+                    .padding(.bottom, 100)
                     
-                    mostUsedSection
+                    
+                    
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 40)
@@ -60,40 +72,123 @@ struct InsightView: View {
         }
     }
     
-    
-    private var mostUsedSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            textStyle(text: "Most Used", size: 22, weight: .semibold)
-            
-            ForEach(accessories) {  device in
-                if appState.currentHome == device.home {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.12))
-                                .frame(width: 40, height: 40)
-                            Image(systemName: logoNames[device.category]!)
-                                .foregroundStyle(Color.white)
-                        }
-                        
-                        textStyle(text: device.name, size: 15, weight: .medium)
-                        
-                        Spacer()
-                        
-                        textStyle(text: formattedDuration(totalDurationMinutes: device.getTotalDuration(month: Date(), unit: .m)), size: 14, color: .white.opacity(0.55))
+    private var mostUsedHrs: some View{
+        
+        VStack{
+            ForEach(
+                accessories
+                    .filter{$0.home == appState.currentHome}
+                    .sorted{
+                        $0.getTotalDuration(month: Date(), unit: .m) > $1.getTotalDuration(month: Date(), unit: .m)
                     }
-                    .padding(.vertical, 12)
+                    .prefix(3)
+            ) {  device in
+                
+                HStack() {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: logoNames[device.category]!)
+                            .foregroundStyle(Color.white)
+                    }
                     
-//                    if index < viewModel.mostUsedDevices.count - 1 {
-//                        Divider().overlay(Color.white.opacity(0.15))
-//                    }
+                    Text (device.name)
+                        .font(.subheadline)
+                        .tint(.white)
+                        .fontWeight(.medium)
+                    
+                    Spacer()
+                    
+                    Text (formattedDuration(totalDurationMinutes: device.getTotalDuration(month: Date(), unit: .m)))
+                        .font(.subheadline)
+                        .tint(.white)
+                        .opacity(0.55)
                 }
+                .padding(.vertical, 12)
+                
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 4)
         .glassEffect(.clear, in: .rect(cornerRadius: 20))
     }
+    
+    private var mostUsedWatt: some View{
+        VStack{
+            ForEach(
+                accessories
+                    .filter{$0.home == appState.currentHome}
+                    .sorted{
+                        $0.getTotalWattDevice(month: Date()) > $1.getTotalWattDevice(month: Date())
+                    }
+                    .prefix(3)
+            ) {  device in
+                HStack() {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: logoNames[device.category]!)
+                            .foregroundStyle(Color.white)
+                    }
+                    
+                    Text(device.name)
+                        .fontWeight(.medium)
+                        .font(.subheadline)
+                    
+                    Spacer()
+                    
+                    Text ("\(device.getTotalWattDevice(month: Date())) Watt")
+                        .tint(.white)
+                        .opacity(0.55)
+                }
+                .padding(.vertical, 12)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+        .glassEffect(.clear, in: .rect(cornerRadius: 20))
+    }
+    
+    private var mostSpending: some View{
+        VStack{
+            ForEach(
+                accessories
+                    .filter{$0.home == appState.currentHome}
+                    .sorted{
+                        $0.getTotalSpendDevice(month: Date(), home: appState.currentHome!) > $1.getTotalSpendDevice(month: Date(), home: appState.currentHome!)
+                    }
+                    .prefix(3)
+            ) {  device in
+                HStack() {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: logoNames[device.category]!)
+                            .foregroundStyle(Color.white)
+                    }
+                    
+                    Text(device.name)
+                        .fontWeight(.medium)
+                        .font(.subheadline)
+                    
+                    Spacer()
+                    
+                    Text(formatToIDR(amount: device.getTotalSpendDevice(month: Date(), home: appState.currentHome!)))
+                        .tint(.white)
+                        .opacity(0.55)
+                }
+                .padding(.vertical, 12)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+        .glassEffect(.clear, in: .rect(cornerRadius: 20))
+    }
+    
+    
 }
 
 
@@ -104,8 +199,13 @@ private struct InsightCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let card {
-                textStyle(text: card.title, size: 19, weight: .bold)
-                textStyle(text: card.bodyMessage, size: 14, color: .white.opacity(0.85))
+                Text(card.title)
+                    .font(.body)
+                    .fontWeight(.bold)
+                Text(card.bodyMessage)
+                    .font(.subheadline)
+                    .tint(.white)
+                    .opacity(0.85)
                     .fixedSize(horizontal: false, vertical: true)
             } else if isLoading {
                 ProgressView()
@@ -120,20 +220,6 @@ private struct InsightCardView: View {
     }
 }
 
-private struct PageDots: View {
-    let count: Int
-    let current: Int
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<count, id: \.self) { index in
-                Circle()
-                    .fill(index == current ? Color.white : Color.white.opacity(0.3))
-                    .frame(width: 6, height: 6)
-            }
-        }
-    }
-}
 
 #Preview {
     InsightView()
