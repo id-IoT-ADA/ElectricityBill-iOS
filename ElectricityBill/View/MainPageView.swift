@@ -109,8 +109,10 @@ struct MainPageView: View {
     @State var isExpanded = false
     @State var selection: String? = nil
     @State var inputLimit: Int? = nil
-    @State var res : [String] = ["", ""]
+    @State var errorMsg: String = ""
     @State var popUpError: Bool = false
+    
+    @Binding var showEditHomeSheet: Bool
     
     private var liveUsageSection: some View {
         VStack(alignment: .center, spacing: 10) {
@@ -247,6 +249,10 @@ struct MainPageView: View {
         selection = nil
     }
     
+    private func getCurrentHMHome() -> HMHome {
+        return homeStore.homes.first(where: { $0.uniqueIdentifier == appState.currentHome?.id})!
+    }
+    
     var body: some View {
             ZStack{
                 Image("Background").resizable()
@@ -291,15 +297,27 @@ struct MainPageView: View {
                     .listStyle(.plain)
                     
                     .sheet(isPresented: $showAddHomeSheet){
-                        AddHomeSheet(
+                        AddEditHomeSheet(
                             isPresented: $showAddHomeSheet,
                             newHomeName: $newHomeName,
                             selection: $selection,
                             isExpanded: $isExpanded,
                             popUpError: $popUpError,
                             inputLimit: $inputLimit,
-                            res: res,
+                            errorMsg: $errorMsg,
                             onConfirm: confirmNewHome
+                        )
+                    }
+                    .sheet(isPresented: $showEditHomeSheet){
+                        AddEditHomeSheet(
+                            isPresented: $showEditHomeSheet,
+                            newHomeName: $newHomeName,
+                            selection: $selection,
+                            isExpanded: $isExpanded,
+                            popUpError: $popUpError,
+                            inputLimit: $inputLimit,
+                            edit: true, errorMsg: $errorMsg,
+                            onConfirm: confirmUpdateHome
                         )
                     }
                     .onAppear{
@@ -308,7 +326,6 @@ struct MainPageView: View {
                     .onChange(of: homeStore.homes) {
                         totalSpend = calculateTotalSpend()
                     }
-                    
                 }
             }
             .toolbar{
@@ -341,7 +358,49 @@ struct MainPageView: View {
         }
     }
     
-    func confirmNewHome() {
+    func confirmUpdateHome(activity: String = ""){
+        if activity == "delete"{
+            let currentHMHome = getCurrentHMHome()
+            homeStore.homeManager.removeHome(currentHMHome){ error in
+                if let error = error {
+                    errorMsg = error.localizedDescription
+                    popUpError = true
+                }else{
+                    context.delete(appState.currentHome!)
+                    homeStore.homeManagerDidUpdateHomes(homeStore.homeManager)
+                    refreshHomeObjList(updateCurrHome: true, primaryHome: homeStore.primaryHome)
+                    print("Successfully remove home")
+                }
+            }
+        }
+        else{
+            guard let selectedCapacity = selection, newHomeName != "" else { return }
+            
+            if SelectElectricity.VAlimit.keys.contains(selectedCapacity){
+                guard let limit = resolvedLimit else {return}
+                appState.currentHome?.VACapacity = limit
+                appState.currentHome?.priceperKwh = OnBoardingPage.priceperKwHDict[selectedCapacity]!
+            }
+            
+            if newHomeName != appState.currentHome!.homeName {
+                let currentHMHome = homeStore.homes.first(where: {$0.uniqueIdentifier == appState.currentHome?.id})
+                currentHMHome?.updateName(newHomeName){error in
+                    if let error = error {
+                        errorMsg = "Failed to update name: \(error.localizedDescription)"
+                        popUpError.toggle()
+                    } else {
+                        appState.currentHome?.homeName = newHomeName
+                        homeStore.isLoaded = false
+                        homeStore.homeManagerDidUpdateHomes(homeStore.homeManager)
+                        print("Home name updated successfully")
+                    }
+                }
+            }
+        }
+        showEditHomeSheet = false
+    }
+    
+    func confirmNewHome(activity: String = "") {
         guard let selectedCapacity = selection, let limit = resolvedLimit else { return }
         homeStore.createHome(homeName: newHomeName) { result in
             switch result {
@@ -357,7 +416,8 @@ struct MainPageView: View {
                 homeStore.isLoaded = false
                 homeStore.homeManagerDidUpdateHomes(homeStore.homeManager)
             case .failure(let error):
-                print("Gagal membuat home: \(error.localizedDescription)")
+                errorMsg = "Failed to create home: \(error.localizedDescription)"
+//                print("Gagal membuat home: \(error.localizedDescription)")
                 popUpError.toggle()
             }
         }
@@ -515,25 +575,27 @@ struct SelectElectricityCapacity: View {
         if selection == "Others"{
             TextField("Input your VA limit", value: $inputLimit, format: .number)
                 .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
                 .padding()
-                .transition(.opacity)
+                .glassEffect(.clear)
+                .cornerRadius(10)
+                .padding(.horizontal,20)
         }
-        
-        
-        
     }
 }
 
-struct AddHomeSheet: View {
+struct AddEditHomeSheet: View {
     @Binding var isPresented: Bool
     @Binding var newHomeName: String
     @Binding var selection: String?
     @Binding var isExpanded: Bool
     @Binding var popUpError: Bool
     @Binding var inputLimit: Int?
-    var res: [String]
-    var onConfirm: () -> Void
+    @State var edit: Bool = false
+    @EnvironmentObject var appState: AppState
+    @Binding var errorMsg: String
+    @EnvironmentObject var homeStore: HomeStore
+    @Environment(\.modelContext) var context
+    var onConfirm: (String) -> Void
     
     var body: some View {
         ZStack {
@@ -549,6 +611,14 @@ struct AddHomeSheet: View {
                 }
                 
                 Spacer()
+                
+                HStack{
+                    Spacer()
+                    Button(action: {onConfirm("delete")}){
+                        Text("Delete").foregroundStyle(Color.red)
+                    }
+                    Spacer()
+                }
             }
             .padding()
             .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
@@ -556,6 +626,10 @@ struct AddHomeSheet: View {
             if popUpError {
                 errorOverlay
             }
+        }.onAppear{
+            newHomeName = appState.currentHome?.homeName ?? ""
+            selection = "\(appState.currentHome?.VACapacity ?? 0)"
+            errorMsg = ""
         }
     }
     
@@ -571,9 +645,9 @@ struct AddHomeSheet: View {
             }
             .glassEffect(.clear)
             Spacer()
-            Text("Add New Home").font(Font.headline).bold()
+            Text(edit ? "\(appState.currentHome?.homeName ?? "") Setting" : "Add New Home").font(Font.headline).bold()
             Spacer()
-            Button(action: onConfirm) {
+            Button(action: {onConfirm("")}) {
                 Image(systemName: "checkmark")
                     .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
@@ -594,20 +668,24 @@ struct AddHomeSheet: View {
     
     private var errorOverlay: some View {
         VStack {
-            Text(res[1])
-            Button("Close") { popUpError.toggle() }
-                .padding()
-                .background(Color.blue)
-        }.padding()
+            Text(errorMsg)
+            Button{
+                popUpError.toggle()
+            }label:{
+                Text("Close")
+            }
+            .padding()
+            .background(Color.red).clipShape(Capsule())
+        }.padding().glassEffect(.clear, in: .rect(cornerRadius: 12.0))
     }
 }
 
-#Preview {
-    let container = try! ModelContainer(
-        for: Home.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-    return MainPageView()
-        .environmentObject(HomeStore())
-        .modelContainer(container)
-}
+//#Preview {
+//    let container = try! ModelContainer(
+//        for: Home.self,
+//        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+//    )
+//    return MainPageView()
+//        .environmentObject(HomeStore())
+//        .modelContainer(container)
+//}
