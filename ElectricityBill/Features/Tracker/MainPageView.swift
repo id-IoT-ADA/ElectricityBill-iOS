@@ -602,8 +602,10 @@ struct AddEditHomeSheet: View {
                 errorOverlay
             }
         }.onAppear{
-            newHomeName = appState.currentHome?.homeName ?? ""
-            selection = "\(appState.currentHome?.VACapacity ?? 0)"
+            if edit{
+                newHomeName = appState.currentHome?.homeName ?? ""
+                selection = "\(appState.currentHome?.VACapacity ?? 0)"
+            }
             errorMsg = ""
         }
     }
