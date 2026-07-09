@@ -21,7 +21,7 @@ class HomeStore: NSObject, ObservableObject {
     private let browser = HMAccessoryBrowser()
 
     @Published var homes: [HMHome] = []
-//    @Published var homeLocal: [Home] = []
+    @Published var homeLocal: [Home] = []
     @Published var primaryHome: HMHome?
     /// Unpaired accessories found on the local network / BLE.
     @Published var foundAccessories: [HMAccessory] = []
@@ -45,16 +45,12 @@ class HomeStore: NSObject, ObservableObject {
         homeManager.delegate = self
         browser.delegate = self
     }
-    
-    func getPrimaryHome(){
-        self.primaryHome = self.homes.first(where: { $0.isPrimary })
-    }
 
     // MARK: - Home management
 
     /// Returns the primary home, creating one if the user has none yet.
     func ensurePrimaryHome(completion: ((HMHome?) -> Void)? = nil) {
-        if let home = self.primaryHome ?? homeManager.homes.first {
+        if let home = homeManager.primaryHome ?? homeManager.homes.first {
             primaryHome = home
             refreshPaired()
             completion?(home)
@@ -170,6 +166,9 @@ extension HomeStore: HMHomeManagerDelegate {
             // Jadi delegate tiap home supaya perubahan accessory yang dilakukan
             // di Home app (didAdd/didRemove) terdeteksi live oleh app kita.
             manager.homes.forEach { $0.delegate = self }
+            self.homeLocal = manager.homes.map {
+                Home(id: $0.uniqueIdentifier, homeName: $0.name, priceperKwh: 0)
+            }
             self.primaryHome = manager.primaryHome ?? manager.homes.first
             self.refreshPaired()
             self.isLoaded = true
@@ -207,6 +206,25 @@ extension HomeStore: HMAccessoryBrowserDelegate {
             foundAccessories.append(accessory)
         }
     }
+    
+//    func createHome(homeName: String) -> [String]{
+//        var errMsg = ["", ""]
+//        homeManager.addHome(withName: homeName){ [weak self] (newHome, error) in
+//            if let error = error {
+//                errMsg = ["err", error.localizedDescription]
+//                return
+//            }
+//            if let newHome = newHome {
+//                errMsg = ["success", "Successfully added home: \(newHome.name)"]
+//            }
+//        }
+//        
+//        return errMsg
+//        
+//        func accessoryBrowser(_ browser: HMAccessoryBrowser, didRemoveNewAccessory accessory: HMAccessory) {
+//            foundAccessories.removeAll { $0.uniqueIdentifier == accessory.uniqueIdentifier }
+//        }
+//    }
 
     func createHome(homeName: String, completion: @escaping (Result<HMHome, Error>) -> Void) {
         homeManager.addHome(withName: homeName) { newHome, error in
