@@ -77,7 +77,10 @@ struct AddDeviceView: View {
             WiFiCredentialsSheet(ble: ble, deviceName: peripheral.name ?? "Device")
         }
         .fullScreenCover(isPresented: $showAddAccessory, onDismiss: {
-            if ble.status == .ready { ble.startScan() }
+            // Provisioning + HomeKit pairing selesai — tutup seluruh flow setup
+            // dan kembali ke MonitoringView. JANGAN restart BLE scan, karena itu
+            // yang bikin sheet seolah "kebuka lagi" untuk scanning ulang.
+            dismiss()
         }) {
             AddAccessoryFlow { showAddAccessory = false }
         }

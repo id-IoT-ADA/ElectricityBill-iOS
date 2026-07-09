@@ -34,6 +34,11 @@ class HomeStore: NSObject, ObservableObject {
     /// user action) — not on the initial load of already-paired devices.
     /// Views observe this to auto-dismiss the "Add Accessory" flow.
     @Published var lastPairedAccessoryID: UUID?
+    /// Bertambah setiap kali isi home berubah dari luar app (mis. accessory
+    /// ditamb/dihapus lewat Home app). Menambah accessory ke home yang sudah ada
+    /// TIDAK mengubah array `homes`, jadi views memantau token ini untuk memicu
+    /// ulang sinkronisasi SwiftData.
+    @Published var homeContentsRevision: Int = 0
 
     override init() {
         super.init()
@@ -158,12 +163,36 @@ extension HomeStore: HMHomeManagerDelegate {
     func homeManagerDidUpdateHomes(_ manager: HMHomeManager) {
         DispatchQueue.main.async {
             self.homes = manager.homes
+            // Jadi delegate tiap home supaya perubahan accessory yang dilakukan
+            // di Home app (didAdd/didRemove) terdeteksi live oleh app kita.
+            manager.homes.forEach { $0.delegate = self }
             self.homeLocal = manager.homes.map {
                 Home(id: $0.uniqueIdentifier, homeName: $0.name, priceperKwh: 0)
             }
             self.primaryHome = manager.primaryHome ?? manager.homes.first
             self.refreshPaired()
             self.isLoaded = true
+        }
+    }
+}
+
+// MARK: - HMHomeDelegate
+
+extension HomeStore: HMHomeDelegate {
+    func home(_ home: HMHome, didAdd accessory: HMAccessory) {
+        hkLog.info("home didAdd accessory: \(accessory.name, privacy: .public)")
+        DispatchQueue.main.async {
+            self.observe(accessory)
+            self.refreshPaired()
+            self.homeContentsRevision += 1
+        }
+    }
+
+    func home(_ home: HMHome, didRemove accessory: HMAccessory) {
+        hkLog.info("home didRemove accessory: \(accessory.name, privacy: .public)")
+        DispatchQueue.main.async {
+            self.refreshPaired()
+            self.homeContentsRevision += 1
         }
     }
 }

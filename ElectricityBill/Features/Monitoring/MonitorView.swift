@@ -15,9 +15,11 @@ struct DeviceItemLayout: View {
     @State var bottomText: String
     @State var topWeight: Font = Font.body
     @State var bottomWeight: Font = Font.subheadline
-    @Environment(\.modelContext) private var context
     @Binding var showAlert: Bool
     let device: DeviceModel
+    /// Untuk device HomeKit: menulis state on/off ke accessory nyata (relay ESP32),
+    /// sama seperti kontrol di DeviceEnergyView. Nil untuk mock device.
+    var onSetPower: ((Bool) -> Void)? = nil
     let onToggle: (Bool) -> Void
     
     func canTurnOn(_ device: DeviceModel) -> Bool {
@@ -45,19 +47,13 @@ struct DeviceItemLayout: View {
                             return
                         }
                     }
-                    
-                    device.isActive = newValue
+
+                    // Satu jalur: setActive mengurus state + usage record sekaligus.
+                    device.setActive(newValue)
+                    // Kontrol lampu nyata (HomeKit) — setara dengan toggle di detail view.
+                    onSetPower?(newValue)
                 }
             )).tint(.blue).labelsHidden()
-                .onChange(of: device.isActive) {
-                    if device.isActive == true {
-                        let newUsageRecord = DeviceUsageRecord(startTime: Date(), device: device)
-                        context.insert(newUsageRecord)
-                    }
-                    else{
-                        device.usageRecords.last?.endTime = Date()
-                    }
-                }
         }
     }
 }
@@ -83,16 +79,16 @@ struct MonitoringView: View {
         ForEach(filteredAccessories)  {accessory in
             if let currHMHome = homeStore.homes.first(where: { $0.uniqueIdentifier == appState.currentHome!.id}), let hmAcc = currHMHome.accessories.first(where: {$0.uniqueIdentifier == accessory.id}){
                 NavigationLink {
-                    DeviceEnergyView(accessory: hmAcc, context: context)
+                    DeviceEnergyView(accessory: hmAcc, device: accessory, context: context)
                         .navigationTitle(accessory.name)
                 } label: {
-                    DeviceItemLayout(logoName: logoNames[accessory.category]!, topText: accessory.name, bottomText: "\(accessory.VARating ?? 0) VA", showAlert: $showAlert, device: accessory){ newValue in
+                    DeviceItemLayout(logoName: logoNames[accessory.category]!, topText: accessory.name, bottomText: "\(accessory.VARating ?? 0) VA", showAlert: $showAlert, device: accessory, onSetPower: { homeStore.setPower($0, for: hmAcc) }){ newValue in
                         selectedAccessory = accessory
                     }
                 }
                 .padding()
                 .glassEffect(.clear, in: .rect(cornerRadius: 12.0))
-                
+
             }
             //APUS KL UDH GA ADA MOCK DATA
             else{
@@ -205,6 +201,15 @@ struct MonitoringView: View {
             .onChange(of: appState.currentHome){
                 filteredAccessories = filterAccessories()
             }
+            // Device baru dari sync SwiftData (mis. accessory hasil pairing) —
+            // recompute agar langsung muncul dan ter-sort ke atas.
+            .onChange(of: visibleAccessories.count){
+                filteredAccessories = filterAccessories()
+            }
+            // Isi HomeKit berubah (tambah/hapus lewat Home app) — refresh sort.
+            .onChange(of: homeStore.homeContentsRevision){
+                filteredAccessories = filterAccessories()
+            }
             .toolbar {
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -219,7 +224,13 @@ struct MonitoringView: View {
             .navigationLinkIndicatorVisibility(.hidden)
             .alert("Power Usage Warning!", isPresented: $showAlert) {
                 Button("Turn On", role: .cancel) {
-                    selectedAccessory?.isActive = true
+                    guard let acc = selectedAccessory else { return }
+                    acc.setActive(true)
+                    // Konsisten dengan toggle biasa: kontrol lampu HomeKit nyata.
+                    if let hmHome = homeStore.homes.first(where: { $0.uniqueIdentifier == appState.currentHome?.id }),
+                       let hmAcc = hmHome.accessories.first(where: { $0.uniqueIdentifier == acc.id }) {
+                        homeStore.setPower(true, for: hmAcc)
+                    }
                 }
                 Button("Cancel", role: .destructive) {
 //                    print("Item deleted.")
@@ -240,10 +251,28 @@ struct MonitoringView: View {
     }
     
     func filterAccessories() -> [DeviceModel]{
+        // ID accessory HomeKit yang benar-benar ada di home aktif SEKARANG — dipakai
+        // untuk sorting, sehingga tidak bergantung pada flag tersimpan yang bisa basi.
+        let homeKitIDs: Set<UUID> = {
+            guard let currentID = appState.currentHome?.id,
+                  let hmHome = homeStore.homes.first(where: { $0.uniqueIdentifier == currentID })
+            else { return [] }
+            return Set(hmHome.accessories.map(\.uniqueIdentifier))
+        }()
+
         return visibleAccessories.filter {
             $0.home == appState.currentHome && (searchText == "" || $0.name.localizedCaseInsensitiveContains(searchText))
             && (searchCategory == "" || $0.category.lowercased() == searchCategory.lowercased())
-            
+
+        }
+        // Accessory HomeKit nyata tampil di paling atas; sisanya (mock) menyusul.
+        // Tiebreaker createdAt menjaga urutan dalam tiap grup tetap stabil
+        // (sorted(by:) di Swift tidak dijamin stable).
+        .sorted { a, b in
+            let aHK = homeKitIDs.contains(a.id)
+            let bHK = homeKitIDs.contains(b.id)
+            if aHK != bHK { return aHK }
+            return a.createdAt < b.createdAt
         }
     }
 }

@@ -105,7 +105,7 @@ struct OnBoardingPage: View {
                 default: cat = "Others"
             }
             
-            let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: acc.name, category: cat, VARating: 5, home: appState.currentHome!)
+            let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: acc.name, category: cat, VARating: 5, isFromHomeKit: true, home: appState.currentHome!)
             context.insert(accessoryObj)
         }
         
