@@ -10,10 +10,6 @@ import HomeKit
 import SwiftData
 import Foundation
 
-func textStyle(text: String, size: Int = 12, weight: Font.Weight = Font.Weight.regular, color: Color = Color.white) -> Text{
-    return Text(text).font(Font.system(size: CGFloat(size), weight: weight)).foregroundColor(color)
-}
-
 struct LightningBolt: Shape {
     var cornerRadius: CGFloat = 8.0
     func path(in rect: CGRect) -> Path {
@@ -48,7 +44,7 @@ struct LightningBolt: Shape {
 struct LightningBoltView: View {
     @EnvironmentObject var appState: AppState
     
-    @State var usedWatt: Double
+    let usedWatt: Double
     
     var body: some View {
         
@@ -120,8 +116,7 @@ struct MainPageView: View {
         VStack(alignment: .center, spacing: 10) {
             Spacer()
             HStack {
-                textStyle(text: "Live Usage", size: 25, weight: .semibold)
-                    .padding(.leading, 20)
+                Text("\(appState.currentHome?.homeName ?? "Home") - Live Usage").font(Font.title2).bold().padding(.leading, 20)
                 Spacer()
             }
             
@@ -133,8 +128,7 @@ struct MainPageView: View {
             
             HStack(spacing: 0) {
                 let usedWattRounded = Int(usedWatt.rounded())
-                textStyle(text: "\(usedWattRounded)", size: 21, weight: .bold)
-                textStyle(text: "/\(appState.currentHome?.wattLimit() ?? 0) watt", size: 21)
+                Text("\(usedWattRounded)/\(Int(appState.currentHome?.wattLimit() ?? 0)) watt").font(Font.title3).bold()
             }
             
             VStack(spacing: -210) {
@@ -149,7 +143,8 @@ struct MainPageView: View {
     private var usageAxisLabels: some View {
         VStack {
             HStack {
-                textStyle(text: "\(appState.currentHome?.wattLimit() ?? 0) watt", size: 12, color: .white.opacity(0.55))
+                Text("\(Int(appState.currentHome?.wattLimit() ?? 0)) watt").font(Font.caption2)
+                    .foregroundStyle(.white.opacity(0.55))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2)
                     .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
@@ -159,7 +154,7 @@ struct MainPageView: View {
             Spacer()
             HStack {
                 Capsule().fill(Color.white.opacity(0.55)).frame(width: 30, height: 1.5)
-                textStyle(text: "0 watt", size: 12, color: .white.opacity(0.55))
+                Text("0 watt").font(Font.caption2).foregroundStyle(.white.opacity(0.55))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2)
                     .overlay(Capsule().fill(.clear).stroke(.white.opacity(0.55), lineWidth: 1.0))
@@ -173,14 +168,14 @@ struct MainPageView: View {
         Group {
             if appState.currentHome?.devices.isEmpty == false {
                 VStack(alignment: .leading) {
-                    textStyle(text: "Total Spend", size: 25, weight: .semibold)
+                    Text("Total Spend").font(Font.title2).bold()
                     totalSpendCard
                 }
                 .listRowBackground(Color.clear)
             } else {
                 HStack {
                     Spacer()
-                    textStyle(text: "Add accessory to your home")
+                    Text("Add accessory to your home").font(Font.body)
                     Spacer()
                 }
                 .padding()
@@ -215,14 +210,14 @@ struct MainPageView: View {
             HStack(spacing: 20) {
                 Image("MoneyBag").resizable().frame(width: 52, height: 59)
                 VStack(alignment: .leading) {
-                    textStyle(text: "This Month You Spend", size: 18, weight: .semibold)
-                    textStyle(text: "\(formatToIDR(amount: totalSpend))", size: 18)
+                    Text("This Month You Spend").font(Font.headline).bold()
+                    Text("\(formatToIDR(amount: totalSpend))").font(Font.headline)
                 }
                 Spacer()
             }
             HStack {
                 Spacer()
-                textStyle(text: expandTotalSpend ? "close" : "details")
+                Text(expandTotalSpend ? "close" : "details")
                 Image(systemName: expandTotalSpend ? "chevron.up" : "chevron.down")
                     .font(Font.system(size: 12))
                     .foregroundStyle(Color.white)
@@ -308,11 +303,9 @@ struct MainPageView: View {
                         )
                     }
                     .onAppear{
-//                        updateSwiftHomeData()
                         totalSpend = calculateTotalSpend()
                     }
                     .onChange(of: homeStore.homes) {
-//                        updateSwiftHomeData()
                         totalSpend = calculateTotalSpend()
                     }
                     
@@ -429,8 +422,8 @@ struct DetailsView: View{
                         let logoName = logoNames[categoryType]!
                         Image(systemName: logoName).font(Font.system(size: 35, weight: .thin))
                         VStack(alignment:.leading){
-                            textStyle(text: categoryType, size: 15, weight: .semibold)
-                            textStyle(text: "\(rupiahFormatted)", size: 15)
+                            Text(categoryType).font(Font.subheadline).bold()
+                            Text("\(rupiahFormatted)").font(Font.body.weight(.medium))
                         }
                         Spacer()
                     }
@@ -488,7 +481,6 @@ struct SelectElectricityCapacity: View {
             .glassEffect(.clear)
             .cornerRadius(10)
         }
-        //            .padding(.horizontal,20)
         
         if isExpanded {
             List(SelectElectricity.Ecapacity, id: \.self) { capacity in
@@ -519,7 +511,6 @@ struct SelectElectricityCapacity: View {
                 RoundedRectangle(cornerRadius: 28)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
-            //                .padding(.horizontal, 20)
         }
         if selection == "Others"{
             TextField("Input your VA limit", value: $inputLimit, format: .number)
@@ -549,11 +540,11 @@ struct AddHomeSheet: View {
             VStack(alignment: .leading, spacing: 30) {
                 header
                 VStack(alignment: .leading){
-                    textStyle(text: "Home Name", size: 16, weight: .bold)
+                    Text("Home Name").font(Font.headline).bold()
                     nameField
                 }
                 VStack(alignment: .leading){
-                    textStyle(text: "Select Electricity Capacity", size: 16, weight: .bold)
+                    Text("Select Electricity Capacity").font(Font.headline).bold()
                     SelectElectricityCapacity(isExpanded: $isExpanded, selection: $selection, inputLimit: $inputLimit)
                 }
                 
@@ -580,7 +571,7 @@ struct AddHomeSheet: View {
             }
             .glassEffect(.clear)
             Spacer()
-            textStyle(text: "Add New Home", size: 17, weight: .bold)
+            Text("Add New Home").font(Font.headline).bold()
             Spacer()
             Button(action: onConfirm) {
                 Image(systemName: "checkmark")

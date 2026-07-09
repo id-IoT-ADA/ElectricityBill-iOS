@@ -202,6 +202,9 @@ struct MonitoringView: View {
             .onChange(of: [searchText, searchCategory]){
                 filteredAccessories = filterAccessories()
             }
+            .onChange(of: appState.currentHome){
+                filteredAccessories = filterAccessories()
+            }
             .toolbar {
                 
                 ToolbarItem(placement: .topBarTrailing) {
