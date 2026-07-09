@@ -11,10 +11,13 @@ import HomeKit
 
 struct DeviceEnergyView: View {
     @StateObject private var monitor: EnergyMonitor
+    /// Sumber tampilan on/off yang sama dengan list, supaya kedua layar sinkron.
+    let device: DeviceModel
     @Query(sort: \EnergyReading.timestamp, order: .reverse) private var energyReadings: [EnergyReading]
 
-    init(accessory: HMAccessory, context: ModelContext) {
-        _monitor = StateObject(wrappedValue: .init(accessory: accessory, context: context))
+    init(accessory: HMAccessory, device: DeviceModel, context: ModelContext) {
+        self.device = device
+        _monitor = StateObject(wrappedValue: .init(accessory: accessory, device: device, context: context))
     }
 
     var body: some View {
@@ -30,9 +33,14 @@ struct DeviceEnergyView: View {
             .padding(.top)
 
             // Lamp control — drives the ESP32 relay via the Outlet's On characteristic.
+            // Baca `device.isActive` (sumber yang sama dengan list) agar tetap sinkron;
+            // set memperbarui state app + usage record DAN menulis ke relay HomeKit.
             Toggle(isOn: Binding(
-                get: { monitor.isOn },
-                set: { monitor.setOn($0) }
+                get: { device.isActive },
+                set: { newValue in
+                    device.setActive(newValue)
+                    monitor.setOn(newValue)
+                }
             )) {
                 Label("Lamp", systemImage: "lightbulb.fill")
             }
@@ -67,10 +75,21 @@ struct DeviceEnergyView: View {
                 }
                 .font(.caption)
                 .monospacedDigit()
+                .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Background image sebagai layer belakang; hanya IA yang menembus safe area,
+        // sementara konten tetap dilayout di bawah navigation bar (tidak nabrak).
+        .background(
+            Image("Background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+        )
     }
 
     /// Satu baris metrik: nama + nilai berformat + satuan.

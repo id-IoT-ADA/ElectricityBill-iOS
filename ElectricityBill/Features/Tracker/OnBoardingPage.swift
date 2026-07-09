@@ -105,7 +105,8 @@ struct OnBoardingPage: View {
                 default: cat = "Others"
             }
             
-            let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: acc.name, category: cat, VARating: 5, home: appState.currentHome!)
+            // VARating awal 0; dikalibrasi sekali dari arus nyata (EnergyMonitor).
+            let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: acc.name, category: cat, VARating: 0, isFromHomeKit: true, home: appState.currentHome!)
             context.insert(accessoryObj)
         }
         

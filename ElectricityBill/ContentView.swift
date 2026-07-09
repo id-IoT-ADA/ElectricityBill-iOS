@@ -15,89 +15,91 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State var homeObjList: [Home] = []
-    @State var showEditHomeSheet : Bool = false
-    
+
     var toolbarContent: some View {
-        Menu{
-            Button{
-                showEditHomeSheet = true
-            }label:{
-                Text("Edit Home")
-                Image(systemName: "gear")
-            }
-            
-            Divider()
-            
-            ForEach(homeObjList, id: \.self){ home in
-                Button{
-                    appState.currentHome = home
-                }label:{
-                    Text(home.homeName)
-                    if appState.currentHome! == home{
-                        Text("Current Location").font(Font.caption2)
-                        Image(systemName: "checkmark")
+//        ToolbarItem(placement: .topBarTrailing){
+            Menu{
+                ForEach(homeObjList, id: \.self){ home in
+                    Button{
+                        appState.currentHome = home
+                    }label:{
+                        Text(home.homeName)
+                        if appState.currentHome! == home{
+                            Text("Current Location").font(Font.caption2)
+                            Image(systemName: "checkmark")
+                        }
+                        
                     }
-                    
                 }
-            }
-        }label:{
-            Image(systemName: "ellipsis")
-        }.foregroundStyle(Color.white)
+            }label:{
+                Image(systemName: "ellipsis")
+            }.foregroundStyle(Color.white)
+//        }
     }
     
     var body: some View {
         Group {
             if hasCompletedOnboarding {
                 if homeStore.isLoaded{
-                    TabView {
-                        Tab("Home", systemImage: "house.fill"){
-                            NavigationStack{
-                                MainPageView(showEditHomeSheet: $showEditHomeSheet)
-                                    .toolbar(
-                                        appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                        for: .tabBar
-                                    )
-                                    .toolbar{
-                                        ToolbarItem(placement: .topBarTrailing){
-                                            toolbarContent
+                        TabView {
+                            Tab("Home", systemImage: "house.fill"){
+                                NavigationStack{
+                                    MainPageView()
+                                        .toolbar(
+                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                            for: .tabBar
+                                        )
+                                        .toolbar{
+                                            ToolbarItem(placement: .topBarTrailing){
+                                                toolbarContent
+                                            }
                                         }
-                                    }
+                                }
+                            }
+                            Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
+                                NavigationStack{
+                                    MonitoringView()
+                                        .toolbar(
+                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                            for: .tabBar
+                                        )
+                                        .toolbar{
+                                            ToolbarItem(placement: .topBarTrailing){
+                                                toolbarContent
+                                            }
+                                        }
+                                }
+                            }
+                            Tab("Insight", systemImage: "lightbulb.circle.fill") {
+                                NavigationStack{
+                                    InsightView()
+                                        .toolbar(
+                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                            for: .tabBar
+                                        )
+                                        .toolbar{
+                                            ToolbarItem(placement: .topBarTrailing){
+                                                toolbarContent
+                                            }
+                                        }
+                                }
                             }
                         }
-                        Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                            NavigationStack{
-                                MonitoringView()
-                                    .toolbar(
-                                        appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                        for: .tabBar
-                                    )
-                                    .toolbar{
-                                        ToolbarItem(placement: .topBarTrailing){
-                                            toolbarContent
-                                        }
-                                    }
-                            }
+                        .foregroundStyle(Color(.white))
+                        .onAppear(perform: updateSwiftHomeData)
+                        .onChange(of: homeStore.homes) {
+                            updateSwiftHomeData()
                         }
-                        Tab("Insight", systemImage: "lightbulb.circle.fill") {
-                            NavigationStack{
-                                InsightView()
-                                    .toolbar(
-                                        appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                        for: .tabBar
-                                    )
-                                    .toolbar{
-                                        ToolbarItem(placement: .topBarTrailing){
-                                            toolbarContent
-                                        }
-                                    }
-                            }
+                        // Accessory baru dipairing tidak mengubah daftar `homes`,
+                        // jadi picu sync juga saat ada pairing yang baru selesai.
+                        .onChange(of: homeStore.lastPairedAccessoryID) {
+                            updateSwiftHomeData()
                         }
-                    }
-                    .foregroundStyle(Color(.white))
-                    .onAppear(perform: updateSwiftHomeData)
-                    .onChange(of: homeStore.homes) {
-                        updateSwiftHomeData()
-                    }
+                        // Perubahan accessory dari Home app (tambah/hapus) juga tidak
+                        // mengubah `homes`; token ini yang menandainya.
+                        .onChange(of: homeStore.homeContentsRevision) {
+                            updateSwiftHomeData()
+                        }
                 }
                 else{
                     ProgressView("Loading Homekit...").background(
@@ -112,46 +114,61 @@ struct ContentView: View {
         }
     }
     
+    /// Memetakan kategori HomeKit ke string kategori internal app.
+    func category(for accessory: HMAccessory) -> String {
+        switch accessory.category.categoryType {
+        case HMAccessoryCategoryTypeLightbulb: return "Lamp"
+        case HMAccessoryCategoryTypeAirConditioner: return "AC"
+        case HMAccessoryCategoryTypeTelevision: return "Television"
+        default: return "Others"
+        }
+    }
+
     func updateSwiftHomeData(){
         let descriptor = FetchDescriptor<Home>()
         do {
             var items = try context.fetch(descriptor)
-            let idsInData = Set(items.map(\.id))
             var primaryHome: HMHome? = nil
             var updateCurrHome: Bool = false
             
             for home in homeStore.homes {
-                if !idsInData.contains(home.uniqueIdentifier) {
+                let homeObj: Home
+                if let existing = items.first(where: { $0.id == home.uniqueIdentifier }) {
+                    // Home sudah ada di SwiftData — cukup pakai object-nya.
+                    homeObj = existing
+                } else {
                     print("add: \(home.name)")
                     // Default kwHlimit untuk home yang muncul dari luar app (bukan lewat sheet ini,
                     // misalnya dibuat via Home app) — user bisa edit limitnya nanti.
-                    let homeObj = Home(id: home.uniqueIdentifier, VACapacity: 0, homeName: home.name, priceperKwh: 0)
-                    context.insert(homeObj)
-                    
-                    for acc in home.accessories {
-                        var cat = ""
-                        switch acc.category.categoryType {
-                        case HMAccessoryCategoryTypeLightbulb: cat = "Lamp"
-                        case HMAccessoryCategoryTypeAirConditioner: cat = "AC"
-                        case  HMAccessoryCategoryTypeTelevision: cat = "Television"
-                        default: cat = "Others"
-                        }
-                        
-                        let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: cat, VARating: 5, home: homeObj)
-                        context.insert(accessoryObj)
-                    }
-                    // MOCK DATA
+                    let newHome = Home(id: home.uniqueIdentifier, VACapacity: 0, homeName: home.name, priceperKwh: 0)
+                    context.insert(newHome)
+                    homeObj = newHome
+
+                    // MOCK DATA — hanya untuk home yang baru pertama kali muncul.
                     let categories = ["Lamp", "Television", "Others", "AC"]
                     let VAs = [5, 15, 150, 900]
                     for i in 0..<7 {
-                        
+
                         let accessoryObj = DeviceModel(id: UUID(), name: "\(home.name) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: homeObj)
-                        
+
                         let deviceUsageObj = DeviceUsageRecord(startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
                         context.insert(accessoryObj)
                         context.insert(deviceUsageObj)
                     }
                 }
+
+                // Sinkronisasi accessory secara idempotent: buat DeviceModel untuk
+                // setiap HMAccessory yang belum punya record — baik di home baru
+                // maupun home lama (mis. accessory yang baru saja dipairing).
+                let existingAccIDs = Set(homeObj.devices.map(\.id))
+                for acc in home.accessories where !existingAccIDs.contains(acc.uniqueIdentifier) {
+                    print("add accessory: \(acc.name)")
+                    // VARating awal 0; nanti dikalibrasi sekali dari arus nyata
+                    // (lihat EnergyMonitor) setelah accessory mengalirkan arus.
+                    let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: category(for: acc), VARating: 0, isFromHomeKit: true, home: homeObj)
+                    context.insert(accessoryObj)
+                }
+
                 if home.isPrimary {
                     primaryHome = home
                 }

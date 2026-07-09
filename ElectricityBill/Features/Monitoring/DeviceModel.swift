@@ -18,7 +18,11 @@ class DeviceModel {
     var createdAt: Date
     var updatedAt: Date?
     var deletedAt: Date?
-    
+    /// True jika device ini berasal dari accessory HomeKit nyata (dipairing lewat
+    /// app atau Home app), bukan mock data. Dipakai untuk menaikkannya ke atas
+    /// daftar di MonitoringView. Default false agar migrasi ringan tetap aman.
+    var isFromHomeKit: Bool = false
+
     var home: Home?
     
     @Relationship(deleteRule: .cascade, inverse: \DeviceUsageRecord.device)
@@ -33,6 +37,7 @@ class DeviceModel {
         createdAt: Date = .now,
         updatedAt: Date? = nil,
         deletedAt: Date? = nil,
+        isFromHomeKit: Bool = false,
         home: Home? = nil
     ) {
         self.id = id
@@ -43,6 +48,7 @@ class DeviceModel {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.deletedAt = deletedAt
+        self.isFromHomeKit = isFromHomeKit
         self.home = home
     }
 
