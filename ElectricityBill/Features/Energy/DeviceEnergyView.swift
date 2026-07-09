@@ -29,6 +29,16 @@ struct DeviceEnergyView: View {
             }
             .padding(.top)
 
+            // Lamp control — drives the ESP32 relay via the Outlet's On characteristic.
+            Toggle(isOn: Binding(
+                get: { monitor.isOn },
+                set: { monitor.setOn($0) }
+            )) {
+                Label("Lamp", systemImage: "lightbulb.fill")
+            }
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+
             // Semua metrik live — cermin dari baris Serial log firmware:
             // V | I(mA) | P(mW) | E(Wh) | E(kWh)
             VStack(spacing: 10) {
