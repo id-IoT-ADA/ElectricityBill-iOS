@@ -15,91 +15,99 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State var homeObjList: [Home] = []
-
+    @State var showEditHomeSheet : Bool = false
+    
     var toolbarContent: some View {
-//        ToolbarItem(placement: .topBarTrailing){
-            Menu{
-                ForEach(homeObjList, id: \.self){ home in
-                    Button{
-                        appState.currentHome = home
-                    }label:{
-                        Text(home.homeName)
-                        if appState.currentHome! == home{
-                            Text("Current Location").font(Font.caption2)
-                            Image(systemName: "checkmark")
-                        }
-                        
-                    }
-                }
+        Menu{
+            Button{
+                showEditHomeSheet = true
             }label:{
-                Image(systemName: "ellipsis")
-            }.foregroundStyle(Color.white)
-//        }
+                Text("Edit Home")
+                Image(systemName: "gear")
+            }
+            
+            Divider()
+            
+            ForEach(homeObjList, id: \.self){ home in
+                Button{
+                    appState.currentHome = home
+                }label:{
+                    Text(home.homeName)
+                    if appState.currentHome! == home{
+                        Text("Current Location").font(Font.caption2)
+                        Image(systemName: "checkmark")
+                    }
+                    
+                }
+            }
+        }label:{
+            Image(systemName: "ellipsis")
+        }.foregroundStyle(Color.white)
     }
     
     var body: some View {
         Group {
             if hasCompletedOnboarding {
                 if homeStore.isLoaded{
-                        TabView {
-                            Tab("Home", systemImage: "house.fill"){
-                                NavigationStack{
-                                    MainPageView()
-                                        .toolbar(
-                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                            for: .tabBar
-                                        )
-                                        .toolbar{
-                                            ToolbarItem(placement: .topBarTrailing){
-                                                toolbarContent
-                                            }
+                    TabView {
+                        Tab("Home", systemImage: "house.fill"){
+                            NavigationStack{
+                                MainPageView(showEditHomeSheet: $showEditHomeSheet)
+                                    .toolbar(
+                                        appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                        for: .tabBar
+                                    )
+                                    .toolbar{
+                                        ToolbarItem(placement: .topBarTrailing){
+                                            toolbarContent
                                         }
-                                }
-                            }
-                            Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                                NavigationStack{
-                                    MonitoringView()
-                                        .toolbar(
-                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                            for: .tabBar
-                                        )
-                                        .toolbar{
-                                            ToolbarItem(placement: .topBarTrailing){
-                                                toolbarContent
-                                            }
-                                        }
-                                }
-                            }
-                            Tab("Insight", systemImage: "lightbulb.circle.fill") {
-                                NavigationStack{
-                                    InsightView()
-                                        .toolbar(
-                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                            for: .tabBar
-                                        )
-                                        .toolbar{
-                                            ToolbarItem(placement: .topBarTrailing){
-                                                toolbarContent
-                                            }
-                                        }
-                                }
+                                    }
                             }
                         }
-                        .foregroundStyle(Color(.white))
-                        .onAppear(perform: updateSwiftHomeData)
-                        .onChange(of: homeStore.homes) {
-                            updateSwiftHomeData()
+                        Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
+                            NavigationStack{
+                                MonitoringView()
+                                    .toolbar(
+                                        appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                        for: .tabBar
+                                    )
+                                    .toolbar{
+                                        ToolbarItem(placement: .topBarTrailing){
+                                            toolbarContent
+                                        }
+                                    }
+                            }
                         }
-                        // Accessory baru dipairing tidak mengubah daftar `homes`,
-                        // jadi picu sync juga saat ada pairing yang baru selesai.
-                        .onChange(of: homeStore.lastPairedAccessoryID) {
-                            updateSwiftHomeData()
+Tab("Insight", systemImage: "lightbulb.circle.fill") {
+    NavigationStack{
+        InsightView()
+                                    .toolbar(
+                                        appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                                        for: .tabBar
+                                    )
+                                    .toolbar{
+                                        ToolbarItem(placement: .topBarTrailing){
+                                            toolbarContent
+                                        }
+                                    }
+                            }
                         }
-                        // Perubahan accessory dari Home app (tambah/hapus) juga tidak
-                        // mengubah `homes`; token ini yang menandainya.
-                        .onChange(of: homeStore.homeContentsRevision) {
-                            updateSwiftHomeData()
-                        }
+                    }
+                    .foregroundStyle(Color(.white))
+                    .onAppear(perform: updateSwiftHomeData)
+                    .onChange(of: homeStore.homes) {
+                        updateSwiftHomeData()
+                    }
+                    // Accessory baru dipairing tidak mengubah daftar `homes`,
+                    // jadi picu sync juga saat ada pairing yang baru selesai.
+                    .onChange(of: homeStore.lastPairedAccessoryID) {
+                        updateSwiftHomeData()
+                    }
+                    // Perubahan accessory dari Home app (tambah/hapus) juga tidak
+                    // mengubah `homes`; token ini yang menandainya.
+                    .onChange(of: homeStore.homeContentsRevision) {
+                        updateSwiftHomeData()
+                    }
                 }
                 else{
                     ProgressView("Loading Homekit...").background(
