@@ -15,6 +15,7 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State var homeObjList: [Home] = []
+    @State private var showEditHomeSheet = false
 
     var toolbarContent: some View {
 //        ToolbarItem(placement: .topBarTrailing){
@@ -41,65 +42,7 @@ struct ContentView: View {
         Group {
             if hasCompletedOnboarding {
                 if homeStore.isLoaded{
-                        TabView {
-                            Tab("Home", systemImage: "house.fill"){
-                                NavigationStack{
-                                    MainPageView()
-                                        .toolbar(
-                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                            for: .tabBar
-                                        )
-                                        .toolbar{
-                                            ToolbarItem(placement: .topBarTrailing){
-                                                toolbarContent
-                                            }
-                                        }
-                                }
-                            }
-                            Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
-                                NavigationStack{
-                                    MonitoringView()
-                                        .toolbar(
-                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                            for: .tabBar
-                                        )
-                                        .toolbar{
-                                            ToolbarItem(placement: .topBarTrailing){
-                                                toolbarContent
-                                            }
-                                        }
-                                }
-                            }
-                            Tab("Insight", systemImage: "lightbulb.circle.fill") {
-                                NavigationStack{
-                                    InsightView()
-                                        .toolbar(
-                                            appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
-                                            for: .tabBar
-                                        )
-                                        .toolbar{
-                                            ToolbarItem(placement: .topBarTrailing){
-                                                toolbarContent
-                                            }
-                                        }
-                                }
-                            }
-                        }
-                        .foregroundStyle(Color(.white))
-                        .onAppear(perform: updateSwiftHomeData)
-                        .onChange(of: homeStore.homes) {
-                            updateSwiftHomeData()
-                        }
-                        // Accessory baru dipairing tidak mengubah daftar `homes`,
-                        // jadi picu sync juga saat ada pairing yang baru selesai.
-                        .onChange(of: homeStore.lastPairedAccessoryID) {
-                            updateSwiftHomeData()
-                        }
-                        // Perubahan accessory dari Home app (tambah/hapus) juga tidak
-                        // mengubah `homes`; token ini yang menandainya.
-                        .onChange(of: homeStore.homeContentsRevision) {
-                            updateSwiftHomeData()
-                        }
+                    mainTabView
                 }
                 else{
                     ProgressView("Loading Homekit...").background(
@@ -111,6 +54,52 @@ struct ContentView: View {
             } else {
                 WelcomePage()
             }
+        }
+    }
+
+    private var mainTabView: some View {
+        TabView {
+            Tab("Home", systemImage: "house.fill"){
+                tab(MainPageView(showEditHomeSheet: $showEditHomeSheet))
+            }
+            Tab("Monitor", systemImage: "inset.filled.rectangle.and.person.filled") {
+                tab(MonitoringView())
+            }
+            Tab("Insight", systemImage: "lightbulb.circle.fill") {
+                tab(InsightView())
+            }
+        }
+        .foregroundStyle(Color(.white))
+        .onAppear(perform: updateSwiftHomeData)
+        .onChange(of: homeStore.homes) {
+            updateSwiftHomeData()
+        }
+        // Accessory baru dipairing tidak mengubah daftar `homes`,
+        // jadi picu sync juga saat ada pairing yang baru selesai.
+        .onChange(of: homeStore.lastPairedAccessoryID) {
+            updateSwiftHomeData()
+        }
+        // Perubahan accessory dari Home app (tambah/hapus) juga tidak
+        // mengubah `homes`; token ini yang menandainya.
+        .onChange(of: homeStore.homeContentsRevision) {
+            updateSwiftHomeData()
+        }
+    }
+
+    /// Membungkus konten sebuah tab dalam NavigationStack dengan toolbar yang sama.
+    @ViewBuilder
+    private func tab(_ content: some View) -> some View {
+        NavigationStack {
+            content
+                .toolbar(
+                    appState.currentHome?.VACapacity == 0 ? .hidden : .visible,
+                    for: .tabBar
+                )
+                .toolbar{
+                    ToolbarItem(placement: .topBarTrailing){
+                        toolbarContent
+                    }
+                }
         }
     }
     
