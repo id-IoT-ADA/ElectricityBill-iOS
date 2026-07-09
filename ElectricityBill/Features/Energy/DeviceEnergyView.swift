@@ -17,7 +17,7 @@ struct DeviceEnergyView: View {
 
     init(accessory: HMAccessory, device: DeviceModel, context: ModelContext) {
         self.device = device
-        _monitor = StateObject(wrappedValue: .init(accessory: accessory, context: context))
+        _monitor = StateObject(wrappedValue: .init(accessory: accessory, device: device, context: context))
     }
 
     var body: some View {
@@ -75,10 +75,21 @@ struct DeviceEnergyView: View {
                 }
                 .font(.caption)
                 .monospacedDigit()
+                .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Background image sebagai layer belakang; hanya IA yang menembus safe area,
+        // sementara konten tetap dilayout di bawah navigation bar (tidak nabrak).
+        .background(
+            Image("Background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+        )
     }
 
     /// Satu baris metrik: nama + nilai berformat + satuan.

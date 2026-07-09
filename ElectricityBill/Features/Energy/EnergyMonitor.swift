@@ -19,10 +19,18 @@ class EnergyMonitor : NSObject, ObservableObject {
     @Published var isOn: Bool = false
 
     private let accessory: HMAccessory
+    private let device: DeviceModel
     private let context: ModelContext
     private var powerChar: HMCharacteristic?
     private var lastPersist = Date.distantPast
     private let persistInterval: TimeInterval = 30
+
+    // Kalibrasi VARating sekali seumur hidup device: setelah accessory mengalirkan
+    // arus selama `calibrationWindow` detik, nilai mA saat itu dijadikan VARating
+    // dan tidak diperbarui lagi.
+    private let calibrationWindow: TimeInterval = 10
+    private var currentStartedAt: Date?
+    private var didCalibrate: Bool = false
     
     private let energyUUIDs: Set<String> = [
         EveCharacteristic.voltage,
@@ -31,11 +39,30 @@ class EnergyMonitor : NSObject, ObservableObject {
         EveCharacteristic.kWh
     ]
     
-    init(accessory: HMAccessory, context: ModelContext) {
+    init(accessory: HMAccessory, device: DeviceModel, context: ModelContext) {
         self.accessory = accessory
+        self.device = device
         self.context = context
         super.init()
+        // Sudah punya VARating (mis. hasil kalibrasi sebelumnya) → jangan kalibrasi lagi.
+        self.didCalibrate = (device.VARating ?? 0) != 0
         subscribe()
+    }
+
+    /// Menetapkan VARating satu kali dari arus nyata: mulai hitung sejak arus
+    /// pertama muncul, lalu setelah `calibrationWindow` detik ambil nilai mA
+    /// saat itu (mis. 6.12 → 6). Setelah itu tidak pernah diperbarui lagi.
+    private func calibrateIfNeeded() {
+        guard !didCalibrate else { return }
+        let mA = current * 1000
+        guard mA > 0 else { return }            // butuh arus dulu
+        if currentStartedAt == nil {
+            currentStartedAt = Date()
+            return
+        }
+        guard Date().timeIntervalSince(currentStartedAt!) >= calibrationWindow else { return }
+        device.VARating = Int(mA.rounded())
+        didCalibrate = true
     }
     
     private func subscribe() {
@@ -108,6 +135,7 @@ extension EnergyMonitor: HMAccessoryDelegate {
             case EveCharacteristic.kWh: kWh = value
             default: return
         }
+        calibrateIfNeeded()
         persist()
     }
 }

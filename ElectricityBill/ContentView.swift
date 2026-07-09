@@ -163,7 +163,9 @@ struct ContentView: View {
                 let existingAccIDs = Set(homeObj.devices.map(\.id))
                 for acc in home.accessories where !existingAccIDs.contains(acc.uniqueIdentifier) {
                     print("add accessory: \(acc.name)")
-                    let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: category(for: acc), VARating: 5, isFromHomeKit: true, home: homeObj)
+                    // VARating awal 0; nanti dikalibrasi sekali dari arus nyata
+                    // (lihat EnergyMonitor) setelah accessory mengalirkan arus.
+                    let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: category(for: acc), VARating: 0, isFromHomeKit: true, home: homeObj)
                     context.insert(accessoryObj)
                 }
 
