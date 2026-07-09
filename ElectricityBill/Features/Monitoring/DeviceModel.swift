@@ -119,6 +119,14 @@ extension DeviceModel{
         return totalDuration
     }
     
+    func getTotalWattDevice(month: Date) -> Int{
+        return Int(Double(VARating!) * 0.8 * getTotalDuration(month: month, unit: .hr))
+    }
+    
+    func getTotalSpendDevice(month: Date, home: Home) -> Double{
+        return Double(getTotalWattDevice(month: month)/1000) * home.priceperKwh!
+    }
+    
     
 }
 
