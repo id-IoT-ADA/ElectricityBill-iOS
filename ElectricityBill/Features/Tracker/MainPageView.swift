@@ -8,7 +8,6 @@
 import SwiftUI
 import HomeKit
 import SwiftData
-import Foundation
 
 struct LightningBolt: Shape {
     var cornerRadius: CGFloat = 8.0
@@ -423,30 +422,6 @@ struct MainPageView: View {
         }
     }
 }
-
-func formatToIDR(amount: Double) -> String {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.locale = Locale(identifier: "id_ID")
-    formatter.currencySymbol = "Rp "
-    
-    
-    if let finalString = formatter.string(from: NSNumber(value: amount)){
-        return finalString
-    }
-    else{
-        return "Rp "
-    }
-}
-
-let sectionOrder: [String] = ["Lamp", "AC", "Television", "Others"]
-
-let logoNames = [
-    "Lamp" : "lightbulb.min",
-    "AC" : "air.conditioner.horizontal",
-    "Television" : "tv",
-    "Others" : "macbook.and.iphone"
-]
 
 struct DetailsView: View{
     @EnvironmentObject var appState: AppState
