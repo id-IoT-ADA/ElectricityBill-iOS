@@ -86,7 +86,7 @@ struct MonitoringView: View {
                     DeviceEnergyView(accessory: hmAcc, context: context)
                         .navigationTitle(accessory.name)
                 } label: {
-                    DeviceItemLayout(logoName: logoNames[accessory.category]!, topText: accessory.name, bottomText: " V, mA", showAlert: $showAlert, device: accessory){ newValue in
+                    DeviceItemLayout(logoName: logoNames[accessory.category]!, topText: accessory.name, bottomText: "\(accessory.VARating ?? 0) VA", showAlert: $showAlert, device: accessory){ newValue in
                         selectedAccessory = accessory
                     }
                 }
