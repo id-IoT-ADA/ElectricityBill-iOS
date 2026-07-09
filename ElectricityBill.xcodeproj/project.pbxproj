@@ -271,6 +271,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ElectricityBill/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Savergy;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We use Bluetooth to discover and set up your smart devices";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We use Bluetooth to discover and set up your smart devices";
 				INFOPLIST_KEY_NSHomeKitUsageDescription = "This app uses HomeKit to control your smart devices like lamps.";
@@ -286,7 +287,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = binb.ElectricityBill;
+				PRODUCT_BUNDLE_IDENTIFIER = IdIoT.binb.Savergy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -310,6 +311,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ElectricityBill/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Savergy;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We use Bluetooth to discover and set up your smart devices";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We use Bluetooth to discover and set up your smart devices";
 				INFOPLIST_KEY_NSHomeKitUsageDescription = "This app uses HomeKit to control your smart devices like lamps.";
@@ -325,7 +327,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = binb.ElectricityBill;
+				PRODUCT_BUNDLE_IDENTIFIER = IdIoT.binb.Savergy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
