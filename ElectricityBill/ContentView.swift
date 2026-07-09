@@ -23,9 +23,9 @@ struct ContentView: View {
                     Button{
                         appState.currentHome = home
                     }label:{
-                        textStyle(text: home.homeName, size: 16)
+                        Text(home.homeName)
                         if appState.currentHome! == home{
-                            textStyle(text: "Current Location", size: 12)
+                            Text("Current Location").font(Font.caption2)
                             Image(systemName: "checkmark")
                         }
                         
