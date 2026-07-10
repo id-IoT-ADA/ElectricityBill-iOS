@@ -34,6 +34,11 @@ Savergy helps users better understand their electricity usage by providing real-
 
 ## Features
 
+### ⚠️ Blackout Prevention Alerts
+
+- Receive notifications when electricity usage approaches the circuit breaker limit.
+- Prevent unexpected power outages before they occur.
+
 ### 🔌 Device-Level Energy Monitoring
 
 - Monitor real-time electricity usage for each connected appliance.
