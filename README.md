@@ -34,11 +34,6 @@ Savergy helps users better understand their electricity usage by providing real-
 
 ## Features
 
-### ⚠️ Blackout Prevention Alerts
-
-- Receive notifications when electricity usage approaches the circuit breaker limit.
-- Prevent unexpected power outages before they occur.
-
 ### 🔌 Device-Level Energy Monitoring
 
 - Monitor real-time electricity usage for each connected appliance.
@@ -61,9 +56,10 @@ Savergy helps users better understand their electricity usage by providing real-
 ### Mobile Application
 
 - SwiftUI
+- SwiftData
 - HomeKit
+- CoreBluetooth
 - FoundationModels
-- EnergyKit
 - Foundation
 
 ### IoT Hardware
@@ -83,7 +79,7 @@ Savergy helps users better understand their electricity usage by providing real-
 
 1. Smart plugs powered by **ESP32** measure the energy consumption of connected appliances.
 2. **HomeSpan** enables the ESP32 devices to communicate with **Apple HomeKit**.
-3. The Savergy iOS application retrieves electricity usage data from HomeKit.
+3. The Savergy iOS application retrieves electricity usage real-time data through INA 219.
 4. The application aggregates device-level consumption into household-level statistics.
 5. Electricity spending is estimated based on accumulated energy usage.
 6. When the total electrical load approaches the configured circuit breaker limit, Savergy sends a blackout warning notification.
@@ -123,7 +119,7 @@ Monitoring  Monitoring  Estimation
 1. Clone the repository.
 
 ```bash
-git clone https://github.com/yourusername/savergy.git
+git clone https://github.com/xx/savergy.git
 ```
 
 2. Open the project using Xcode.
