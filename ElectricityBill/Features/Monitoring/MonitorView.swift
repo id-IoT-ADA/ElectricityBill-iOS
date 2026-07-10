@@ -236,7 +236,7 @@ struct MonitoringView: View {
 //                    print("Item deleted.")
                 }
             } message: {
-                let progress = (appState.currentHome?.calcCurrentlyUsedWatt() ?? 0) / (appState.currentHome?.wattLimit() ?? 0) * 100
+                let progress = (appState.currentHome?.calcCurrentlyUsedWatt() ?? 1) / (appState.currentHome?.wattLimit() ?? 0)
                 Text("You've used \(Int(progress))% of your PLN capacity. Turning \(selectedAccessory?.name ?? "this device") on might cause a sudden blackout.")
                 
 //                Text("You've used \(Int(progress))% of your PLN capacity. Turning ")

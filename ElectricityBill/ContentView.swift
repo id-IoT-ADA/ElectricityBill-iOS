@@ -16,26 +16,34 @@ struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State var homeObjList: [Home] = []
     @State private var showEditHomeSheet = false
-
+    
     var toolbarContent: some View {
-//        ToolbarItem(placement: .topBarTrailing){
-            Menu{
-                ForEach(homeObjList, id: \.self){ home in
-                    Button{
-                        appState.currentHome = home
-                    }label:{
-                        Text(home.homeName)
-                        if appState.currentHome! == home{
-                            Text("Current Location").font(Font.caption2)
-                            Image(systemName: "checkmark")
-                        }
-                        
-                    }
-                }
+        Menu{
+            Button{
+                showEditHomeSheet = true
             }label:{
-                Image(systemName: "ellipsis")
-            }.foregroundStyle(Color.white)
-//        }
+                Text("Edit Home")
+                Image(systemName: "gear")
+                
+            }
+            
+            Divider()
+            
+            ForEach(homeObjList, id: \.self){ home in
+                Button{
+                    appState.currentHome = home
+                }label:{
+                    Text(home.homeName)
+                    if appState.currentHome! == home{
+                        Text("Current Location").font(Font.caption2)
+                        Image(systemName: "checkmark")
+                    }
+                    
+                }
+            }
+        }label:{
+            Image(systemName: "ellipsis")
+        }.foregroundStyle(Color.white)
     }
     
     var body: some View {
@@ -56,7 +64,7 @@ struct ContentView: View {
             }
         }
     }
-
+    
     private var mainTabView: some View {
         TabView {
             Tab("Home", systemImage: "house.fill"){
@@ -85,7 +93,7 @@ struct ContentView: View {
             updateSwiftHomeData()
         }
     }
-
+    
     /// Membungkus konten sebuah tab dalam NavigationStack dengan toolbar yang sama.
     @ViewBuilder
     private func tab(_ content: some View) -> some View {
@@ -112,7 +120,7 @@ struct ContentView: View {
         default: return "Others"
         }
     }
-
+    
     func updateSwiftHomeData(){
         let descriptor = FetchDescriptor<Home>()
         do {
@@ -132,20 +140,20 @@ struct ContentView: View {
                     let newHome = Home(id: home.uniqueIdentifier, VACapacity: 0, homeName: home.name, priceperKwh: 0)
                     context.insert(newHome)
                     homeObj = newHome
-
+                    
                     // MOCK DATA — hanya untuk home yang baru pertama kali muncul.
                     let categories = ["Lamp", "Television", "Others", "AC"]
                     let VAs = [5, 15, 150, 900]
                     for i in 0..<7 {
-
+                        
                         let accessoryObj = DeviceModel(id: UUID(), name: "\(home.name) Device \(i)", category: categories[i%4], VARating: VAs[i%4], home: homeObj)
-
+                        
                         let deviceUsageObj = DeviceUsageRecord(startTime: Calendar.current.date(byAdding: .hour, value: -1 * 3 * i, to: Date())!, device: accessoryObj)
                         context.insert(accessoryObj)
                         context.insert(deviceUsageObj)
                     }
                 }
-
+                
                 // Sinkronisasi accessory secara idempotent: buat DeviceModel untuk
                 // setiap HMAccessory yang belum punya record — baik di home baru
                 // maupun home lama (mis. accessory yang baru saja dipairing).
@@ -157,7 +165,7 @@ struct ContentView: View {
                     let accessoryObj = DeviceModel(id: acc.uniqueIdentifier, name: "\(acc.name)", category: category(for: acc), VARating: 0, isFromHomeKit: true, home: homeObj)
                     context.insert(accessoryObj)
                 }
-
+                
                 if home.isPrimary {
                     primaryHome = home
                 }
