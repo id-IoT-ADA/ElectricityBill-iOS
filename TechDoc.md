@@ -28,9 +28,9 @@ Secondly, when we realized that we can't control smart devices remotely using Ho
 In the documentation, there is no explicit explanation that in order to have a long range control over the smart devices we need a HomeHub. We did not find alteratives solution to this. Therefore, we lend Apple HomePod to simulate the device control. 
 
 ## 6. The Revised Decision
-Final decision: HomeKit (Main Framework), EnergyKit, FoundationModel, CoreBluetooth
+Final decision: HomeKit (Main Framework), FoundationModel, CoreBluetooth
 
-From thinking we would use Network, it changed into those 4 frameworks because through exploration we found that HomeKit supports DIY accessory. We also added EnergyKit because it supports the feature we want in our app which is to track and give insights on energy usage per device. We added FoundationModel to generate weekly insight on user's electricity consumption. Lastly, CoreBluetooth is needed in order to send local wifi credentials to ESP32.
+From thinking we would use Network, it changed into those 4 frameworks because through exploration we found that HomeKit supports DIY accessory. We also added EnergyKit because it supports the feature we want in our app which is to track and give insights on energy usage per device (We ends up not using Energy Kit). We added FoundationModel to generate weekly insight on user's electricity consumption. Lastly, CoreBluetooth is needed in order to send local wifi credentials to ESP32.
 
 
 ## About the Frameworks
@@ -45,4 +45,4 @@ at first, this application main target is for young people who lived abroad. but
 Building this app with the "anak rantau" in mind, we choose to implement bahasa indonesia as part of the localization. Our first target would be indonesian since this app is currently build in Indonesia.
 
 ## About Privacy
-The data needed in the application is primarily from the Home App. Once you have downloaded the app it will ask permission to the Home data. Declining the permission request would make the app to stand on its own and no integration will be made to the home app that is available to your phone. 
+- The data needed in the application is primarily from the Home App. Once you have downloaded the app it will ask permission to the Home data. Declining the permission request would make the app to stand on its own and no integration will be made to the home app that is available to your phone.
