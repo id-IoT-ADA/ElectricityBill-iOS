@@ -119,7 +119,7 @@ Monitoring  Monitoring  Estimation
 1. Clone the repository.
 
 ```bash
-git clone https://github.com/xx/savergy.git
+git clone https://github.com/xx/savergy.git](https://github.com/id-IoT-ADA/ElectricityBill-iOS.git
 ```
 
 2. Open the project using Xcode.
